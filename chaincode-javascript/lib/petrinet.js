@@ -10,29 +10,57 @@ async function getAssetJSON(ctx, key) {
 	return JSON.parse(asset.toString())
 }
 
+async function putAssetJSON(ctx, key, asset) {
+	await ctx.stub.putState(key, Buffer.from(JSON.stringify(asset)));
+}
+
 class Petrinet extends Contract {
 
     constructor() {
 	   super('nl.dl4ld.petrinet.');
     }
-
+ 
     async PutToken(ctx, tokenId, netId, placeId) {
+	    const myOrgId = ctx.clientIdentity.getMSPID();
 	    const tokenKey = ctx.stub.createCompositeKey(this.name, ['token', tokenId]);
 	    const netKey = ctx.stub.createCompositeKey(this.name, ['net', netId]);
 	    const placeKey = ctx.stub.createCompositeKey(this.name, ['place', placeId]);
-	    const tokenR = await ctx.stub.getState(tokenKey);
-	    const netR = await ctx.stub.getState(netKey);
-	    const placeR = await ctx.stub.getState(placeKey);
-	    const token = JSON.parse(tokenR.toString())
-	    const place = JSON.parse(placeR.toString())
-	    const net = JSON.parse(netR.toString())
+	    const token = await getAssetJSON(ctx, tokenKey);
+	    const place = await getAssetJSON(ctx, placeKey);
+	    const net = await getAssetJSON(ctx, netKey);
+	    if(!net || !token || !place) {
+		throw new Error(`Could not proceed with PutToken as an asset was not found!`);
+	    }
+	    // I can not do anything with others' tokens
+	    if(token.owner != myOrgId) {
+		throw new Error(`You do not own token ${tokenId}!`);
+	    }
 
 	    const firedTransitions = []
+	    // Check if token and place are owned by same org.
+	    // If owners are different generate and event.
+	    if(token.owner != place.owner) {
+		// Place is not mine hence transfer token to place owner
+		token.owner = place.owner;
+		// Update token asset
+		await putAssetJSON(ctx, tokenKey, token)
 
+		const eventData = {
+			token: tokenId,
+			place: placeId,
+			net: netId
+		}
+		const eventDataBuffer = Buffer.from(JSON.stringify(eventData));
+		await ctx.stub.setEvent('TransitionRequest', eventDataBuffer);
+		return {
+			action: 'TransitionRequest'
+		}
+	    }
+	    // If owners are the same, move the token.
 	    place.tokens.push(token)
 	    await ctx.stub.putState(placeKey, Buffer.from(JSON.stringify(place)));
 
-
+	    // Check for fired transitions with new token move
 	    const arcs = net.arcs.filter(arc => {
 		return ((arc.src.id == place.id) && (arc.src.type == 'place'))
 	    })
@@ -80,8 +108,13 @@ class Petrinet extends Contract {
 	    }))
 	    if(firedTransitions) {
 	    	await ctx.stub.putState(netKey, Buffer.from(JSON.stringify(net)));
+		return {
+			action: "FiredTransitions"
+		}
 	    }
-	    return net;
+	    return {
+		    action: "NoActionTaken"
+	    }
     }
 
     async CreateNet(ctx, netId, netJSON) {
