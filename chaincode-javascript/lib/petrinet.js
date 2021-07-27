@@ -126,7 +126,8 @@ class Petrinet extends Contract {
 		    owner: ctx.clientIdentity.getMSPID(),
 		    arcs: [],
 		    domains: {},
-		    states: {}
+		    states: {},
+		    state: "ACTIVE"
 	    }
 	    console.log(net)
 	    /*
@@ -236,7 +237,8 @@ class Petrinet extends Contract {
 		    id: placeId,
 		    issuer: ctx.clientIdentity.getID(),
 		    owner: ctx.clientIdentity.getMSPID(),
-		    tokens: []
+		    tokens: [],
+		    state: "ACTIVE"
 	    }
             await ctx.stub.putState(key, Buffer.from(JSON.stringify(place)));
 	    return place
@@ -257,7 +259,8 @@ class Petrinet extends Contract {
 		    id: tokenId,
 		    issuer: ctx.clientIdentity.getID(),
 		    owner: ctx.clientIdentity.getMSPID(),
-		    color: JSON.parse(color)
+		    color: JSON.parse(color),
+		    state: "ACTIVE"
 	    }
             await ctx.stub.putState(key, Buffer.from(JSON.stringify(token)));
 	    return token
@@ -278,7 +281,28 @@ class Petrinet extends Contract {
 		    id: transitionId,
 		    issuer: ctx.clientIdentity.getID(),
 		    owner: ctx.clientIdentity.getMSPID(),
-		    functionURI: functionURI
+		    action: {
+			type: "nl.dl4ld.actorAction",
+			uri: functionURI
+		    },
+		    state: "ACTIVE"
+	    }
+            await ctx.stub.putState(key, Buffer.from(JSON.stringify(transition)));
+	    return transition
+    }
+    
+    async CreateWebhookTransition(ctx, transitionId, webhookURI, headers) {
+	    const key = ctx.stub.createCompositeKey(this.name, ['transition', transitionId])
+	    const transition = {
+		    id: transitionId,
+		    issuer: ctx.clientIdentity.getID(),
+		    owner: ctx.clientIdentity.getMSPID(),
+		    action: {
+			type: "nl.dl4ld.webhook",
+			uri: webhookURI,
+			headers: headers
+		    },
+		    state: "ACTIVE"
 	    }
             await ctx.stub.putState(key, Buffer.from(JSON.stringify(transition)));
 	    return transition

@@ -331,8 +331,8 @@ async function main() {
 			try {
 				// C R E A T E
 				const net = [
-					{ src: {type: 'place',	id: assetKey}, dst: { type: 'transition', id: assetKey2}},
-					{ src: {type: 'transition', id: assetKey2}, dst: { type: 'place', id: assetKey2}},
+					{ src: {type: 'place',	id: assetKey2}, dst: { type: 'transition', id: assetKey2}},
+					{ src: {type: 'transition', id: assetKey2}, dst: { type: 'place', id: assetKey}},
 
 				]
 				console.log(`${GREEN}--> Submit Net: CreateNet, ${assetKey}`);
@@ -349,7 +349,7 @@ async function main() {
 				// C R E A T E
 				console.log(`${GREEN}--> Submit Transaction: PutToken`);
 				transaction = contract1Org1.createTransaction('PutToken');
-				const resultBuffer = await transaction.submit(assetKey, assetKey, assetKey);
+				const resultBuffer = await transaction.submit(assetKey, assetKey, assetKey2);
 				const asset = JSON.parse(resultBuffer.toString('utf8'));
 				console.log(asset);
 				console.log(`${GREEN}<-- Submit PutToken Result: committed, asset ${assetKey}`);

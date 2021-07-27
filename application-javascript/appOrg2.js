@@ -274,6 +274,13 @@ async function main() {
 
 						}
 					}
+					if(event.eventName == "TransitionRequest") {
+						transaction = contract1Org2.createTransaction('PutToken');
+						const resultBuffer = await transaction.submit(asset.token, asset.net, asset.place);
+						const resultAction = JSON.parse(resultBuffer.toString('utf8'));
+						console.log(resultAction);
+
+					}
 					// show the information available with the event
 					console.log(`*** Event: ${event.eventName}:${asset.id}`);
 					// notice how we have access to the transaction information that produced this chaincode event
