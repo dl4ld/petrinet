@@ -11,6 +11,7 @@
     "license": "Apache-2.0",
     "dependencies": {
         "fabric-ca-client": "^2.2.2",
-        "fabric-network": "^2.2.2"
+        "fabric-network": "^2.2.2",
+        "jsonwebtoken": "^8.5.1"
     }
 }
