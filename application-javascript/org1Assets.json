@@ -17,5 +17,8 @@
 				{ "src": {"type": "transition",	"id": "F001"}, "dst": { "type": "place", "id": "P002"}}
 			]
 		}
+	],
+	"moves": [
+		{ "net": "N001", "token": "T001", "place": "P001" }
 	]
 }

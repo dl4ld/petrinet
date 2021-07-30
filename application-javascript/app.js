@@ -45,9 +45,8 @@ function sleep(ms) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function block() {
-	await sleep(30000);
-	block();
+function block() {
+	sleep(30000).then(() => block())
 }
 
 async function initGatewayForOrg(useCommitEvents) {
@@ -264,7 +263,20 @@ async function main() {
 				});
 
 				Promise.all(nets).then((values) => {
-					// Move tokens
+					// Move token
+					const moves = assets.moves.map(async m => {
+						try {
+							// C R E A T E
+							console.log(`${GREEN}--> Submit Transaction: PutToken`);
+							const transaction = contract1Org.createTransaction('PutToken');
+							const resultBuffer = await transaction.submit(m.token, m.net, m.place);
+							const asset = resultBuffer.toString('utf8');
+							console.log(`${GREEN}<-- Submit PutToken Result: committed, asset ${asset}`);
+						} catch (createError) {
+							console.log(`${RED}<-- Submit Failed: PutToken - ${createError}${RESET}`);
+						}
+
+					});
 				});
 			});
 
