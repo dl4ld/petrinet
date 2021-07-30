@@ -7,6 +7,9 @@ const { Gateway, Wallets } = require('fabric-network');
 const EventStrategies = require('fabric-network/lib/impl/event/defaulteventhandlerstrategies');
 const FabricCAServices = require('fabric-ca-client');
 const path = require('path');
+const jwt = require('jsonwebtoken');
+const https = require('https');
+const url = require('url');
 const commandLineArgs = require('command-line-args');
 const { buildCAClient, registerAndEnrollUser, enrollAdmin } = require('../../test-application/javascript/CAUtil.js');
 const AppUtils = require('../../test-application/javascript/AppUtil.js');
@@ -47,6 +50,16 @@ function sleep(ms) {
 
 function block() {
 	sleep(30000).then(() => block())
+}
+
+function getKeys(walletOrg1, Org1UserId) {
+	const fileName = walletOrg1.store.storePath + '/' + Org1UserId + '.id';
+
+	const fileData = fs.readFileSync(fileName, 'utf-8')
+	const data = JSON.parse(fileData);
+	const pub = data.credentials.certificate
+	const priv = data.credentials.privateKey
+
 }
 
 async function initGatewayForOrg(useCommitEvents) {
@@ -154,18 +167,41 @@ function showTransactionData(transactionData) {
 	}
 }
 
-function callWebhook(uri, headers, body) {
-	console.log(`${GREEN}--> Calling  webhook: ${uri}`)
+function callWebhook(ctx, uri, headers, tokenPayload, body) {
+	console.log(`${GREEN}--> Calling  webhook: ${uri}`);
+	// Get user wallet keys to generate jwt
+	const keys = ctx.gateway.identity.credentials;
+	const jwToken = createJWT(keys, tokenPayload); 
+	const uriParts = url.parse(uri);
+	console.log(uriParts);
+	const options = {
+		method: "POST",
+		hostname: uriParts.hostname,
+		path: uriParts.path,
+		headers: {
+			'x-access-token': jwToken
+		}
+	}
+	const req = https.request(options, res => {
+		console.log(`${GREEN}*** statusCode: ${res.statusCode}`)
+		res.on('data', d => {
+			console.log(d.toString('utf-8'));
+		});
+	});
+	req.write(JSON.stringify(body));
+	req.end();
+	console.log(`${GREEN}<-- Finished calling webhook: ${uri}`);
 }
 
-function eventHandler(event) {
+function eventHandler(ctx, event) {
 	try {
 		const asset = JSON.parse(event.payload.toString('utf8'));
 		switch  (event.eventName) {
 			case "Fire":
+				const eventTransaction = event.getTransactionEvent();
 				if(asset.owner == orgMSP) {
 					if(asset.action.type == "nl.dl4ld.webhook") {
-						callWebhook(asset.action.webhookURI, {}, {})
+						callWebhook(ctx, asset.action.uri, {}, { transationId: eventTransaction.transactionId, type: "event", user: userId, org: orgMSP }, asset)
 					}
 				}
 				break;
@@ -174,7 +210,29 @@ function eventHandler(event) {
 	} catch (eventError) {
 		console.log(`${RED}<-- Failed: Event handler - ${eventError}${RESET}`);
 	}
+}
 
+function createJWT(keys, payload) {
+	const p = keys.certificate;
+	const k = keys.privateKey;
+	const jwToken = jwt.sign({
+		payload: payload
+	}, k, { algorithm: 'RS256'})
+
+	return jwToken;
+}
+
+function verifyJWT(keys, token) {
+	const p = keys.certificate;
+	const k = keys.privateKey;
+	return new Promise((resolve, reject) => {
+		jwt.verify(token, p, function(err, decoded) {
+			if(err) {
+				reject(err);
+			}
+			resolve(decoded);
+		});
+	});
 }
 
 async function main() {
@@ -191,6 +249,11 @@ async function main() {
 			network1Org = await gateway1Org.getNetwork(channelName);
 			contract1Org = network1Org.getContract(chaincodeName);
 			let listener;
+			const context = {
+				gateway: gateway1Org,
+				network: network1Org,
+				contract: contract1Org
+			}
 
 
 			
@@ -295,7 +358,7 @@ async function main() {
 					const eventBlock = eventTransaction.getBlockEvent();
 					console.log(`*** block: ${eventBlock.blockNumber.toString()}`);
 					// Handle event
-					eventHandler(event);
+					eventHandler(context, event);
 				};
 				console.log(`${GREEN}--> Start contract event stream to peer in Org${RESET}`);
 				await contract1Org.addContractListener(listener);
