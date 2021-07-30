@@ -172,6 +172,9 @@ function callWebhook(ctx, uri, headers, tokenPayload, body) {
 	// Get user wallet keys to generate jwt
 	const keys = ctx.gateway.identity.credentials;
 	const jwToken = createJWT(keys, tokenPayload); 
+	verifyJWT(keys, jwToken).then(token => {
+		console.log("VERIFY: ", token);
+	})
 	const uriParts = url.parse(uri);
 	console.log(uriParts);
 	const options = {
