@@ -10,10 +10,10 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const https = require('https');
 const url = require('url');
+const fs = require('fs');
 const commandLineArgs = require('command-line-args');
 const { buildCAClient, registerAndEnrollUser, enrollAdmin } = require('../../test-application/javascript/CAUtil.js');
 const AppUtils = require('../../test-application/javascript/AppUtil.js');
-
 
 const RED = '\x1b[31m\n';
 const GREEN = '\x1b[32m\n';
@@ -25,7 +25,8 @@ const optionDefinitions = [
 	{ name: 'ccn', type: String },
 	{ name: 'channel', type: String },
 	{ name: 'assets-file', type: String },
-	{ name: 'user', type: String }
+	{ name: 'user', type: String },
+	{ name: 'plugins', type: String }
 ]
 
 const options = commandLineArgs(optionDefinitions)
@@ -39,6 +40,8 @@ const orgMSP = 'Org' + orgNumber + 'MSP';
 const buildCCPOrg = (options['org-number'] == 1) ? AppUtils.buildCCPOrg1 : AppUtils.buildCCPOrg2
 const buildWallet = AppUtils.buildWallet;
 const assets = require(options['assets-file']);
+const moduleHolder = {};
+const pluginDir = options.plugins || './plugins';
 
 /**
  * Perform a sleep -- asynchronous wait
@@ -61,6 +64,28 @@ function getKeys(walletOrg1, Org1UserId) {
 	const priv = data.credentials.privateKey
 
 }
+
+function loadModules(dir) {
+    fs.lstat(dir, function(err, stat) {
+        if (stat.isDirectory()) {
+            // we have a directory: do a tree walk
+            fs.readdir(dir, function(err, files) {
+                var f, l = files.length;
+                for (var i = 0; i < l; i++) {
+                    f = path.join('./', dir, files[i]);
+                    loadModules(f);
+                }
+            });
+        } else {
+	    if(path.extname(dir) != '.js') {
+		    return
+	    }
+            // we have a file: load it
+            require('./' + dir)(moduleHolder);
+        }
+    });
+}
+
 
 async function initGatewayForOrg(useCommitEvents) {
 	console.log(`${GREEN}--> Fabric client user & Gateway init: Using Org1 identity to Org1 Peer${RESET}`);
@@ -167,7 +192,7 @@ function showTransactionData(transactionData) {
 	}
 }
 
-function callWebhook(ctx, uri, headers, tokenPayload, body) {
+/*function callWebhook(ctx, uri, headers, tokenPayload, body) {
 	console.log(`${GREEN}--> Calling  webhook: ${uri}`);
 	// Get user wallet keys to generate jwt
 	const keys = ctx.gateway.identity.credentials;
@@ -194,7 +219,7 @@ function callWebhook(ctx, uri, headers, tokenPayload, body) {
 	req.write(JSON.stringify(body));
 	req.end();
 	console.log(`${GREEN}<-- Finished calling webhook: ${uri}`);
-}
+}*/
 
 function eventHandler(ctx, event) {
 	try {
@@ -244,6 +269,10 @@ async function main() {
 	let contract1Org;
 	let listener;
 	try {
+		// Load transition handlers
+		loadModules(pluginDir);
+		await sleep(30000)
+		process.exit(0);
 		// Fabric client init: Using Org1 identity to Org1 Peer
 		const gateway1Org = await initGatewayForOrg(true); // transaction handling uses commit events
 		const gateway2Org = await initGatewayForOrg();
@@ -255,7 +284,9 @@ async function main() {
 			const context = {
 				gateway: gateway1Org,
 				network: network1Org,
-				contract: contract1Org
+				contract: contract1Org,
+				userId: userId,
+				orgMSP: orgMSP
 			}
 
 
