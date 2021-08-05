@@ -31,6 +31,7 @@ class Petrinet extends Contract {
 	    if(!net || !token || !place) {
 		throw new Error(`Could not proceed with PutToken as an asset was not found!`);
 	    }
+
 	    // I can not do anything with others' tokens
 	    if(token.owner != myOrgId) {
 		throw new Error(`You do not own token ${tokenId}!`);
@@ -106,12 +107,14 @@ class Petrinet extends Contract {
 			}
 		}
 	    }))
+
 	    if(firedTransitions) {
 	    	await ctx.stub.putState(netKey, Buffer.from(JSON.stringify(net)));
 		return {
 			action: "FiredTransitions"
 		}
 	    }
+
 	    return {
 		    action: "NoActionTaken"
 	    }
@@ -129,7 +132,6 @@ class Petrinet extends Contract {
 		    states: {},
 		    state: "ACTIVE"
 	    }
-	    console.log(net)
 	    /*
 	     * arc struct
 	     * {
@@ -145,44 +147,48 @@ class Petrinet extends Contract {
 	     */
 	    let verified = true
 	    await Promise.all(net.map(async arc => {
-		    console.log("checking: ", arc);
 		    if(arc.src.type == 'place') {
 	    		    const keySrc = ctx.stub.createCompositeKey(this.name, ['place', arc.src.id])
-			    console.log("key: ", keySrc)
 			    const place = await getAssetJSON(ctx, keySrc);
 			    if (!place) {
 				verified = false
 				return
 			    }
+
 			    asset.domains[place.owner] = {
 				    status: "NotAccepted"
 			    }
 
 	    		    const keyDst = ctx.stub.createCompositeKey(this.name, ['transition', arc.dst.id])
-			    console.log("key: ", keyDst)
 			    const transition = await getAssetJSON(ctx, keyDst);
 			    if (!transition) {
 				verified = false
 				return
 			    }
+
+			    asset.states[transition.id] = "EMPTY";
+
 			    asset.domains[transition.owner] = {
 				    status: "NotAccepted"
 			    }
 		    }
+
 		    if(arc.src.type == 'transition') {
 	    		    const keySrc = ctx.stub.createCompositeKey(this.name, ['transition', arc.src.id])
-			    console.log("key: ", keySrc)
 			    const transition = await getAssetJSON(ctx, keySrc);
 			    if (!transition) {
 				//throw new Error(`The transition ${arc.src.id} does not exist`);
 				verified = false
 				return
 			    }
+
+			    asset.states[transition.id] = "EMPTY";
+
 			    asset.domains[transition.owner] = {
 				    status: "NotAccepted"
 			    }
+
 	    		    const keyDst = ctx.stub.createCompositeKey(this.name, ['place', arc.dst.id])
-			    console.log("key: ", keyDst)
 			    const place = await getAssetJSON(ctx, keyDst);
 			    if (!place) {
 				verified = false
