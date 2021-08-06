@@ -86,7 +86,6 @@ function loadModules(dir) {
     });
 }
 
-
 async function initGatewayForOrg(useCommitEvents) {
 	console.log(`${GREEN}--> Fabric client user & Gateway init: Using Org1 identity to Org1 Peer${RESET}`);
 	// build an in memory object with the network configuration (also known as a connection profile)
@@ -192,35 +191,6 @@ function showTransactionData(transactionData) {
 	}
 }
 
-/*function callWebhook(ctx, uri, headers, tokenPayload, body) {
-	console.log(`${GREEN}--> Calling  webhook: ${uri}`);
-	// Get user wallet keys to generate jwt
-	const keys = ctx.gateway.identity.credentials;
-	const jwToken = createJWT(keys, tokenPayload); 
-	verifyJWT(keys, jwToken).then(token => {
-		console.log("VERIFY: ", token);
-	})
-	const uriParts = url.parse(uri);
-	console.log(uriParts);
-	const options = {
-		method: "POST",
-		hostname: uriParts.hostname,
-		path: uriParts.path,
-		headers: {
-			'x-access-token': jwToken
-		}
-	}
-	const req = https.request(options, res => {
-		console.log(`${GREEN}*** statusCode: ${res.statusCode}`)
-		res.on('data', d => {
-			console.log(d.toString('utf-8'));
-		});
-	});
-	req.write(JSON.stringify(body));
-	req.end();
-	console.log(`${GREEN}<-- Finished calling webhook: ${uri}`);
-}*/
-
 function eventHandler(ctx, event) {
 	try {
 		const asset = JSON.parse(event.payload.toString('utf8'));
@@ -228,8 +198,18 @@ function eventHandler(ctx, event) {
 			case "Fire":
 				const eventTransaction = event.getTransactionEvent();
 				if(asset.owner == orgMSP) {
-					if(asset.action.type == "nl.dl4ld.webhook") {
-						callWebhook(ctx, asset.action.uri, {}, { transationId: eventTransaction.transactionId, type: "event", user: userId, org: orgMSP }, asset)
+					const handler = moduleHolder[asset.action.type]
+					if(handler) {
+						console.log(`${GREEN}--> Calling transition handler for ${asset.action.type}${RESET}`);
+						handler(ctx, event)
+							.then(()=>{
+								console.log(`${GREEN}<-- Finished transition handler for ${asset.action.type}${RESET}`);
+							})
+							.catch(e => {
+								throw new Error(e);
+							})
+					} else {
+					  	throw new Error(`Handler for ${asset.action.type} not found!`);
 					}
 				}
 				break;
@@ -240,29 +220,6 @@ function eventHandler(ctx, event) {
 	}
 }
 
-function createJWT(keys, payload) {
-	const p = keys.certificate;
-	const k = keys.privateKey;
-	const jwToken = jwt.sign({
-		payload: payload
-	}, k, { algorithm: 'RS256'})
-
-	return jwToken;
-}
-
-function verifyJWT(keys, token) {
-	const p = keys.certificate;
-	const k = keys.privateKey;
-	return new Promise((resolve, reject) => {
-		jwt.verify(token, p, function(err, decoded) {
-			if(err) {
-				reject(err);
-			}
-			resolve(decoded);
-		});
-	});
-}
-
 async function main() {
 	console.log(`${BLUE} **** START ****${RESET}`);
 	let network1Org;
@@ -271,8 +228,6 @@ async function main() {
 	try {
 		// Load transition handlers
 		loadModules(pluginDir);
-		await sleep(30000)
-		process.exit(0);
 		// Fabric client init: Using Org1 identity to Org1 Peer
 		const gateway1Org = await initGatewayForOrg(true); // transaction handling uses commit events
 		const gateway2Org = await initGatewayForOrg();
@@ -288,8 +243,6 @@ async function main() {
 				userId: userId,
 				orgMSP: orgMSP
 			}
-
-
 			
 			// Create place assets
 			const places = assets.places.map(async p => {
