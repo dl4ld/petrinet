@@ -32,6 +32,10 @@ class Petrinet extends Contract {
 		throw new Error(`Could not proceed with PutToken as an asset was not found!`);
 	    }
 
+	    if(net.state != "ACTIVE") {
+		throw new Error(`Could not proceed with PutToken as net is not ACTIVE`);
+	    }
+
 	    // I can not do anything with others' tokens
 	    if(token.owner != myOrgId) {
 		throw new Error(`You do not own token ${tokenId}!`);
@@ -118,6 +122,26 @@ class Petrinet extends Contract {
 	    return {
 		    action: "NoActionTaken"
 	    }
+    }
+
+    async DeleteNet(ctx, netId) {
+	    const key = ctx.stub.createCompositeKey(this.name, ['net', netId]);
+	    const net = await getAssetJSON(ctx, key);
+	    if(!net) {
+		    throw new Error(`The net ${netId} does not exist!`)
+	    }
+	    if(net.owner != ctx.clientIdentity.getMSPID()) {
+		    throw new Error(`Not authorized to delete ${netId}!`)
+	    }
+        
+	    return ctx.stub.deleteState(key);
+
+	    //net.state = "DELETED";
+            //await ctx.stub.putState(key, Buffer.from(JSON.stringify(net)));
+
+	    //return {
+	//	    action: "DeletedNet"
+	  //  }
     }
 
     async CreateNet(ctx, netId, netJSON) {
@@ -281,6 +305,22 @@ class Petrinet extends Contract {
 	    return token.toString();
     }
 
+    async DeleteTransition(ctx, transitionId) {
+	    const key = ctx.stub.createCompositeKey(this.name, ['transition', transitionId])
+	    const transition = await getAssetJSON(ctx, key);
+	    if(!transition) {
+		    throw new Error(`The transition ${transitionId} does not exist!`);
+	    }
+	    if(transition.owner != ctx.clientIdentity.getMSPID()) {
+
+		    throw new Error(`Not authorized to modify transition ${transitionId} ${transition.owner} ${ctx.clientIdentity.getMSPID()}!`);
+	    }
+	    return ctx.stub.deleteState(key);
+	    //transition.state = "DELETED";
+	    //await. ctx.stub.putState(key, Buffer.from(JSON.stringify(transition)));
+	    //return transition;
+    }
+
     async CreateTransition(ctx, transitionId, functionURI) {
 	    const key = ctx.stub.createCompositeKey(this.name, ['transition', transitionId])
 	    const transition = {
@@ -362,7 +402,7 @@ class Petrinet extends Contract {
         return ctx.stub.putState(id, Buffer.from(JSON.stringify(updatedAsset)));
     }
 
-    // DeleteAsset deletes an given asset from the world state.
+    // DeleteAsset deletes a given asset from the world state.
     async DeleteAsset(ctx, id) {
         const exists = await this.AssetExists(ctx, id);
         if (!exists) {

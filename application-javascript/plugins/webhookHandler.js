@@ -67,7 +67,7 @@ function handler(ctx, event) {
         try {
                 const asset = JSON.parse(event.payload.toString('utf8'));
 		const eventTransaction = event.getTransactionEvent();
-		return callWebhook(ctx, asset.action.uri, {}, { transationId: eventTransaction.transactionId, type: "event", user: ctx.userId, org: ctx.orgMSP }, asset)
+		return callWebhook(ctx, asset.action.uri, {}, { transactionId: eventTransaction.transactionId, type: "event", user: ctx.userId, org: ctx.orgMSP }, asset)
         } catch (eventError) {
 		throw new Error(eventError)
         }

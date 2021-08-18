@@ -18,7 +18,8 @@
 			]
 		}
 	],
-	"moves": [
-		{ "net": "N001", "token": "T001", "place": "P001" }
+	"instructions": [
+			{ "cmd": "move", "net": "N001", "token": "T001", "place": "P001" },
+			{ "cmd": "delete", "asset": "transition", "id": "F001" }
 	]
 }

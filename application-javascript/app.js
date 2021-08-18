@@ -312,21 +312,37 @@ async function main() {
 					}
 				});
 
-				Promise.all(nets).then((values) => {
-					// Move token
-					const moves = assets.moves.map(async m => {
-						try {
-							// C R E A T E
-							console.log(`${GREEN}--> Submit Transaction: PutToken`);
-							const transaction = contract1Org.createTransaction('PutToken');
-							const resultBuffer = await transaction.submit(m.token, m.net, m.place);
-							const asset = resultBuffer.toString('utf8');
-							console.log(`${GREEN}<-- Submit PutToken Result: committed, asset ${asset}`);
-						} catch (createError) {
-							console.log(`${RED}<-- Submit Failed: PutToken - ${createError}${RESET}`);
+				Promise.all(nets).then(async values => {
+					// Run instructions sequentially 
+					for(let i = 0; i < assets.instructions.length; i++) {
+						const instruction = assets.instructions[i];
+						console.log(instruction)
+						if(instruction.cmd == "move") {
+							const m = instruction;
+							try {
+								console.log(`${GREEN}--> Submit Transaction: PutToken`);
+								const transaction = contract1Org.createTransaction('PutToken');
+								const resultBuffer = await transaction.submit(m.token, m.net, m.place);
+								const asset = resultBuffer.toString('utf8');
+								console.log(`${GREEN}<-- Submit PutToken Result: committed, asset ${asset}`);
+							} catch (createError) {
+								console.log(`${RED}<-- Submit Failed: PutToken - ${createError}${RESET}`);
+							}
+						}
+						if(instruction.cmd == "delete") {
+							const d = instruction;
+							try {
+								console.log(`${GREEN}--> Submit Transaction: DeleteAsset`);
+								const transaction = contract1Org.createTransaction('DeleteTransition');
+								const resultBuffer = await transaction.submit(d.id);
+								const asset = resultBuffer.toString('utf8');
+								console.log(`${GREEN}<-- Submit DeleteAsset Result: committed, asset ${asset}`);
+							} catch (createError) {
+								console.log(`${RED}<-- Submit Failed: DeleteAsset - ${createError}${RESET}`);
+							}
 						}
 
-					});
+					} // for loop
 				});
 			});
 
