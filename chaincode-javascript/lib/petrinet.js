@@ -14,6 +14,22 @@ async function putAssetJSON(ctx, key, asset) {
 	await ctx.stub.putState(key, Buffer.from(JSON.stringify(asset)));
 }
 
+function getOutputsById(net, id) {
+	return net.arcs.filter(arc => {
+		return ( arc.src.id == id)
+	}).map(arc => {
+		return arc.dst;
+	})
+}
+
+function getInputsById(net, id) {
+	return net.arcs.filter(arc => {
+		return ( arc.dst.id == id)
+	}).map(arc => {
+		return arc.src;
+	})
+}
+
 class Petrinet extends Contract {
 
     constructor() {
@@ -76,6 +92,7 @@ class Petrinet extends Contract {
 		})
 
 		let fire = true
+		const inputs = []
 		await Promise.all(inputPlaces.map(async p => {
 			console.log("input place: ",p)
 			// ignore the current place
@@ -90,13 +107,14 @@ class Petrinet extends Contract {
 				return
 			}
 			const i = JSON.parse(ir.toString())
-			console.log(i)
+			//inputs.push(i)
 			if(i.tokens.length == 0) {
 				fire = false
 			}
 		}))
 
 		if(fire == true) {
+			const transitionId = a.dst.id;
 	    		const k = ctx.stub.createCompositeKey(this.name, ['transition', a.dst.id]);
 			const t = await ctx.stub.getState(k)
 		    	if (!t || t.length === 0) {
@@ -105,6 +123,8 @@ class Petrinet extends Contract {
 				const transition = JSON.parse(t)
 				firedTransitions.push(transition)
 				net.states[transition.id] = "FIRING"
+				transition.outputs = getOutputsById(net, transitionId);
+				transition.net = netId;
 				console.log("fire: ", transition)
 				const assetBuffer = Buffer.from(JSON.stringify(transition));
 				await ctx.stub.setEvent('Fire', assetBuffer);
@@ -154,7 +174,7 @@ class Petrinet extends Contract {
 		    arcs: [],
 		    domains: {},
 		    states: {},
-		    state: "ACTIVE"
+		    state: "NEW"
 	    }
 	    /*
 	     * arc struct
@@ -227,6 +247,9 @@ class Petrinet extends Contract {
 	    if(verified) {
 		asset.arcs = net
 		asset.domains[asset.owner] = { status: "Accepted" }
+		if(Object.values(asset.domains).every(d => { d.status ==  "Accepted" })) {
+			asset.state = "ACTIVE"
+		}
 		console.log("asset key: ", key)
             	await ctx.stub.putState(key, Buffer.from(JSON.stringify(asset)));
 		const assetBuffer = Buffer.from(JSON.stringify(asset));
@@ -257,6 +280,9 @@ class Petrinet extends Contract {
 		    throw new Error(`${myOrgId} not part of petrinet ${netId}.`)
 	    }
 	    net.domains[myOrgId]['status'] = 'Accepted'
+	    if(Object.values(net.domains).every(d => { return d.status == "Accepted" })) {
+		    net.state = "ACTIVE"
+	    }
 	    await ctx.stub.putState(netKey, Buffer.from(JSON.stringify(net)))
 	    return net
     }
@@ -289,7 +315,7 @@ class Petrinet extends Contract {
 		    id: tokenId,
 		    issuer: ctx.clientIdentity.getID(),
 		    owner: ctx.clientIdentity.getMSPID(),
-		    color: JSON.parse(color),
+		    //color: JSON.parse(color),
 		    state: "ACTIVE"
 	    }
             await ctx.stub.putState(key, Buffer.from(JSON.stringify(token)));

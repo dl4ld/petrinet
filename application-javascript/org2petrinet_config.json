@@ -1,0 +1,27 @@
+{
+	"places": [
+		{"id": "P002"}
+	],
+	"tokens": [
+	],
+	"transitions": [
+		{ "id": "T001", "action": { "type": "nl.dl4ld.webhook", "webhookURI": "https://webhook.site/0df368e0-001e-4786-a680-87af8c7b17b6" }}
+	],
+	"nets": [
+		{
+			"id": "N001",
+			"admin": "Org1MSP",
+			"config": {
+				"kbound": 1
+			},
+			"arcs": [
+				{ "src": {"type": "place",	"id": "P001"}, "dst": { "type": "transition", "id": "T001"}},
+				{ "src": {"type": "transition",	"id": "T001"}, "dst": { "type": "place", "id": "P002"}},
+				{ "src": {"type": "place",	"id": "P002"}, "dst": { "type": "transition", "id": "T002"}},
+				{ "src": {"type": "transition",	"id": "T002"}, "dst": { "type": "place", "id": "P001"}}
+			]
+		}
+	],
+	"instructions": [],
+	"other":[]
+}

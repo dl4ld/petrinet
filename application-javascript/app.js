@@ -24,7 +24,7 @@ const optionDefinitions = [
 	{ name: 'org-number', type: Number },
 	{ name: 'ccn', type: String },
 	{ name: 'channel', type: String },
-	{ name: 'assets-file', type: String },
+	{ name: 'net-config', type: String },
 	{ name: 'user', type: String },
 	{ name: 'plugins', type: String }
 ]
@@ -39,7 +39,7 @@ const org = 'org' + orgNumber;
 const orgMSP = 'Org' + orgNumber + 'MSP';
 const buildCCPOrg = (options['org-number'] == 1) ? AppUtils.buildCCPOrg1 : AppUtils.buildCCPOrg2
 const buildWallet = AppUtils.buildWallet;
-const assets = require(options['assets-file']);
+const assets = require(options['net-config']);
 const moduleHolder = {};
 const pluginDir = options.plugins || './plugins';
 
@@ -191,10 +191,58 @@ function showTransactionData(transactionData) {
 	}
 }
 
+async function createAndMoveToken(ctx, netId, placeId) {
+	const tokenId = 'T' + (Math.floor(Math.random() * 99) + 1);
+	//create
+	try {
+		const assetKey = tokenId;
+		console.log(`${GREEN}--> Submit Transaction: CreateToken, ${assetKey}`);
+		const transaction = ctx.contract.createTransaction('CreateToken');
+		const resultBuffer = await transaction.submit(assetKey, {});
+		const asset = resultBuffer.toString('utf8');
+		console.log(`${GREEN}<-- Submit CreateToken Result: committed, asset ${assetKey}${asset}${RESET}`);
+	} catch (createError) {
+		console.log(`${RED}<-- Submit Failed: CreateToken - ${createError}${RESET}`);
+	}
+	//move
+	try {
+		console.log(`${GREEN}--> Submit Transaction: PutToken`);
+		const transaction = ctx.contract.createTransaction('PutToken');
+		const resultBuffer = await transaction.submit(tokenId, netId, placeId);
+		const asset = resultBuffer.toString('utf8');
+		console.log(`${GREEN}<-- Submit PutToken Result: committed, asset ${asset}`);
+	} catch (createError) {
+		console.log(`${RED}<-- Submit Failed: PutToken - ${createError}${RESET}`);
+	}
+}
+
+async function handleNewNet(ctx, event) {
+	const net = JSON.parse(event.payload.toString('utf8'));
+	if(net.domains[orgMSP]["status"] == "NotAccepted") {
+		// check if we should accept
+		// TODO
+		// accept net
+		try {
+			console.log(`${GREEN}--> Submit Transaction: AcceptNet, ${net.id}`);
+			const transaction = ctx.contract.createTransaction('AcceptNet');
+			const resultBuffer = await transaction.submit(net.id);
+			const acceptedNet = JSON.parse(resultBuffer.toString('utf8'));
+			console.log(acceptedNet);
+			console.log(`${GREEN}<-- Submit AcceptNet Result: committed, asset ${net.id}${RESET}`);
+		} catch (createError) {
+			console.log(`${RED}<-- Submit Failed: AcceptNet - ${createError}${RESET}`);
+		}
+
+	}
+}
+
 function eventHandler(ctx, event) {
 	try {
 		const asset = JSON.parse(event.payload.toString('utf8'));
 		switch  (event.eventName) {
+			case "NewNet":
+				handleNewNet(ctx, event);
+				break;
 			case "Fire":
 				const eventTransaction = event.getTransactionEvent();
 				if(asset.owner == orgMSP) {
@@ -204,6 +252,9 @@ function eventHandler(ctx, event) {
 						handler(ctx, event)
 							.then(()=>{
 								console.log(`${GREEN}<-- Finished transition handler for ${asset.action.type}${RESET}`);
+								asset.outputs.forEach(o => {
+									createAndMoveToken(ctx, asset.net, o.id);
+								});
 							})
 							.catch(e => {
 								throw new Error(e);
@@ -302,6 +353,9 @@ async function main() {
 					try {
 
 						const assetKey = n.id;
+						if(n.admin != orgMSP) {
+							return
+						}
 						console.log(`${GREEN}--> Submit Net: CreateNet, ${assetKey}`);
 						const transaction = contract1Org.createTransaction('CreateNet');
 						const resultBuffer = await transaction.submit(assetKey, JSON.stringify(n.arcs));
@@ -327,6 +381,9 @@ async function main() {
 								console.log(`${GREEN}<-- Submit PutToken Result: committed, asset ${asset}`);
 							} catch (createError) {
 								console.log(`${RED}<-- Submit Failed: PutToken - ${createError}${RESET}`);
+								// hack to retry
+								i -= 1;
+								await sleep(3000);
 							}
 						}
 						if(instruction.cmd == "delete") {

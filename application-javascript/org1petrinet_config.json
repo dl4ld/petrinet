@@ -1,0 +1,32 @@
+{
+	"places": [
+		{"id": "P001"}
+	],
+	"tokens": [
+		{ "id": "F001", "color": "blue" }
+	],
+	"transitions": [
+		{ "id": "T002", "action": { "type": "nl.dl4ld.webhook", "webhookURI": "https://webhook.site/adf99fa2-ff3f-4458-b6ae-3f1b0827f26e" }}
+	],
+	"nets": [
+		{
+			"id": "N001",
+			"admin": "Org1MSP",
+			"config": {
+				"kbound": 1
+			},
+			"arcs": [
+				{ "src": {"type": "place",	"id": "P001"}, "dst": { "type": "transition", "id": "T001"}},
+				{ "src": {"type": "transition",	"id": "T001"}, "dst": { "type": "place", "id": "P002"}},
+				{ "src": {"type": "place",	"id": "P002"}, "dst": { "type": "transition", "id": "T002"}},
+				{ "src": {"type": "transition",	"id": "T002"}, "dst": { "type": "place", "id": "P001"}}
+			]
+		}
+	],
+	"instructions": [
+			{ "cmd": "move", "net": "N001", "token": "F001", "place": "P001" }
+	],
+	"other":[
+			{ "cmd": "delete", "asset": "transition", "id": "T001" }
+	]
+}
