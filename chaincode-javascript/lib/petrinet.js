@@ -194,6 +194,18 @@ class Petrinet extends Contract {
 
     // Revoke authorization for net
     async RevokeNet(ctx, netId) {
+	    const myOrgId = ctx.clientIdentity.getMSPID();
+	    const netKey = ctx.stub.createCompositeKey(this.name, ['net', netId]);
+	    const net = await getAssetJSON(ctx, netKey);
+	    if(!net) {
+		throw new Error(`Could not proceed with RevokeNet as an asset was not found!`);
+	    }
+		asset.domains[asset.owner] = { status: "Accepted" }
+	    if(net.domains[myOrgId][status] == "Accepted") {
+		    net.domains[myOrgId][status] = "NotAccepted"
+		    net.status = "INACTIVE"
+	    }
+	    ctx.stub.putState(netKey, Buffer.from(JSON.stringify(net)));
     }
 
     async DeleteNet(ctx, netId) {
@@ -219,7 +231,6 @@ class Petrinet extends Contract {
 		    owner: ctx.clientIdentity.getMSPID(),
 		    arcs: [],
 		    domains: {},
-		    states: {},
 		    k: 1,
 		    status: "NEW"
 	    }
@@ -257,8 +268,6 @@ class Petrinet extends Contract {
 				return
 			    }
 
-			    asset.states[transition.id] = "EMPTY";
-
 			    asset.domains[transition.owner] = {
 				    status: "NotAccepted"
 			    }
@@ -272,8 +281,6 @@ class Petrinet extends Contract {
 				verified = false
 				return
 			    }
-
-			    asset.states[transition.id] = "EMPTY";
 
 			    asset.domains[transition.owner] = {
 				    status: "NotAccepted"
