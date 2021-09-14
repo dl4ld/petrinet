@@ -30,6 +30,12 @@ function getInputsById(net, id) {
 	})
 }
 
+function isSpaceInPlace(net, place) {
+	// Validate place for k-boundedness
+	return (place.tokens.length < net.k)
+	
+}
+
 class Petrinet extends Contract {
 
     constructor() {
@@ -48,7 +54,9 @@ class Petrinet extends Contract {
 		throw new Error(`Could not proceed with PutToken as an asset was not found!`);
 	    }
 
-	    if(net.state != "ACTIVE") {
+
+	    // Net needs to be in ACTIVE state to run
+	    if(net.status != "ACTIVE") {
 		throw new Error(`Could not proceed with PutToken as net is not ACTIVE`);
 	    }
 
@@ -59,14 +67,14 @@ class Petrinet extends Contract {
 
 	    const firedTransitions = []
 	    // Check if token and place are owned by same org.
-	    // If owners are different generate and event.
+	    // If owners are different; transfer ownership.
 	    if(token.owner != place.owner) {
 		// Place is not mine hence transfer token to place owner
 		token.owner = place.owner;
 		// Update token asset
 		await putAssetJSON(ctx, tokenKey, token)
 
-		const eventData = {
+		/*const eventData = {
 			token: tokenId,
 			place: placeId,
 			net: netId
@@ -75,9 +83,15 @@ class Petrinet extends Contract {
 		await ctx.stub.setEvent('TransitionRequest', eventDataBuffer);
 		return {
 			action: 'TransitionRequest'
-		}
+		}*/
 	    }
-	    // If owners are the same, move the token.
+
+	    // Check if Place can accept tokens.
+	    if(!isSpaceInPlace(net, place) {
+		    throw new Error(`Place exceeds number of tokens: ${net.k}`);
+	    }
+
+	    // Move token to place.
 	    place.tokens.push(token)
 	    await ctx.stub.putState(placeKey, Buffer.from(JSON.stringify(place)));
 
@@ -94,20 +108,17 @@ class Petrinet extends Contract {
 		let fire = true
 		const inputs = []
 		await Promise.all(inputPlaces.map(async p => {
-			console.log("input place: ",p)
-			// ignore the current place
+			// Ignore the current place
 			if(p.src.id == placeId) {
 				return
 			}
 	    		const k = ctx.stub.createCompositeKey(this.name, ['place', p.src.id]);
-			console.log("place key: ",k)
 			const ir = await ctx.stub.getState(k);
 			if(!ir) {
 				console.log("place: " + k + " not found.")
 				return
 			}
 			const i = JSON.parse(ir.toString())
-			//inputs.push(i)
 			if(i.tokens.length == 0) {
 				fire = false
 			}
@@ -118,11 +129,17 @@ class Petrinet extends Contract {
 	    		const k = ctx.stub.createCompositeKey(this.name, ['transition', a.dst.id]);
 			const t = await ctx.stub.getState(k)
 		    	if (!t || t.length === 0) {
-				throw new Error(`Transition ${a.dst.id} does not exist`);
+				throw new Error(`Transition ${a.dst.id} does not exist.`);
 		    	} else {
 				const transition = JSON.parse(t)
+				if(transition.status == 'FIRING') {
+					throw new Error(`Transition ${a.dst.id} is already firing.`);
+				}
+
 				firedTransitions.push(transition)
-				net.states[transition.id] = "FIRING"
+				transition.status = "FIRING"
+	    			await ctx.stub.putState(k, Buffer.from(JSON.stringify(transition)));
+				//net.states[transition.id] = "FIRING"
 				transition.outputs = getOutputsById(net, transitionId);
 				transition.net = netId;
 				console.log("fire: ", transition)
@@ -133,15 +150,50 @@ class Petrinet extends Contract {
 	    }))
 
 	    if(firedTransitions) {
-	    	await ctx.stub.putState(netKey, Buffer.from(JSON.stringify(net)));
+	    	//await ctx.stub.putState(netKey, Buffer.from(JSON.stringify(net)));
 		return {
-			action: "FiredTransitions"
+			action: "FiredTransitions",
+			transitions: firedTransitions
 		}
 	    }
 
 	    return {
 		    action: "NoActionTaken"
 	    }
+    }
+
+    async CompleteTransition(ctx, netId, transitionId) {
+	    const myOrgId = ctx.clientIdentity.getMSPID();
+	    const netKey = ctx.stub.createCompositeKey(this.name, ['net', netId]);
+	    const transitionKey = ctx.stub.createCompositeKey(this.name, ['transition', transitionId]);
+	    const transition = await getAssetJSON(ctx, transitionKey);
+	    const net = await getAssetJSON(ctx, netKey);
+	    if(!net || transition) {
+		throw new Error(`Could not proceed with CompleteTransition as an asset was not found!`);
+	    }
+
+	    const inputPlaces = getInputsById(net, transitionId)
+		    .filter(p => { p.type == 'place'})
+		    .forEach(p => {
+
+			    placeKey = ctx.stub.CompositeKey(this.name, ['place', p.id]);
+			    place = getAssetJSON(ctx, placeKey);
+			    if(place.owner != myOrgId) {
+				    throw new Error(`You do not own place.`);
+			    }
+			    place.tokens.pop();
+	    		    ctx.stub.putState(placeKey, Buffer.from(JSON.stringify(place)));
+		    })
+	    transition.status = "READY"
+	    await ctx.stub.putState(transitionKey, Buffer.from(JSON.stringify(transition)));
+	    return {
+		    action: "CompletedTransition"
+	    }
+
+    }
+
+    // Revoke authorization for net
+    async RevokeNet(ctx, netId) {
     }
 
     async DeleteNet(ctx, netId) {
@@ -156,12 +208,6 @@ class Petrinet extends Contract {
         
 	    return ctx.stub.deleteState(key);
 
-	    //net.state = "DELETED";
-            //await ctx.stub.putState(key, Buffer.from(JSON.stringify(net)));
-
-	    //return {
-	//	    action: "DeletedNet"
-	  //  }
     }
 
     async CreateNet(ctx, netId, netJSON) {
@@ -174,7 +220,8 @@ class Petrinet extends Contract {
 		    arcs: [],
 		    domains: {},
 		    states: {},
-		    state: "NEW"
+		    k: 1,
+		    status: "NEW"
 	    }
 	    /*
 	     * arc struct
@@ -248,7 +295,7 @@ class Petrinet extends Contract {
 		asset.arcs = net
 		asset.domains[asset.owner] = { status: "Accepted" }
 		if(Object.values(asset.domains).every(d => { d.status ==  "Accepted" })) {
-			asset.state = "ACTIVE"
+			asset.status = "ACTIVE"
 		}
 		console.log("asset key: ", key)
             	await ctx.stub.putState(key, Buffer.from(JSON.stringify(asset)));
@@ -281,7 +328,7 @@ class Petrinet extends Contract {
 	    }
 	    net.domains[myOrgId]['status'] = 'Accepted'
 	    if(Object.values(net.domains).every(d => { return d.status == "Accepted" })) {
-		    net.state = "ACTIVE"
+		    net.status = "ACTIVE"
 	    }
 	    await ctx.stub.putState(netKey, Buffer.from(JSON.stringify(net)))
 	    return net
@@ -294,7 +341,7 @@ class Petrinet extends Contract {
 		    issuer: ctx.clientIdentity.getID(),
 		    owner: ctx.clientIdentity.getMSPID(),
 		    tokens: [],
-		    state: "ACTIVE"
+		    status: "READY"
 	    }
             await ctx.stub.putState(key, Buffer.from(JSON.stringify(place)));
 	    return place
@@ -316,7 +363,7 @@ class Petrinet extends Contract {
 		    issuer: ctx.clientIdentity.getID(),
 		    owner: ctx.clientIdentity.getMSPID(),
 		    //color: JSON.parse(color),
-		    state: "ACTIVE"
+		    status: "READY"
 	    }
             await ctx.stub.putState(key, Buffer.from(JSON.stringify(token)));
 	    return token
@@ -357,7 +404,7 @@ class Petrinet extends Contract {
 			type: "nl.dl4ld.actorAction",
 			uri: functionURI
 		    },
-		    state: "ACTIVE"
+		    status: "READY"
 	    }
             await ctx.stub.putState(key, Buffer.from(JSON.stringify(transition)));
 	    return transition
@@ -374,7 +421,7 @@ class Petrinet extends Contract {
 			uri: webhookURI,
 			headers: headers
 		    },
-		    state: "ACTIVE"
+		    status: "READY"
 	    }
             await ctx.stub.putState(key, Buffer.from(JSON.stringify(transition)));
 	    return transition
