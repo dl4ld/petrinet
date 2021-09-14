@@ -87,7 +87,7 @@ class Petrinet extends Contract {
 	    }
 
 	    // Check if Place can accept tokens.
-	    if(!isSpaceInPlace(net, place) {
+	    if(!isSpaceInPlace(net, place)) {
 		    throw new Error(`Place exceeds number of tokens: ${net.k}`);
 	    }
 
