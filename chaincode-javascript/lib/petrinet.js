@@ -168,26 +168,33 @@ class Petrinet extends Contract {
 	    const transitionKey = ctx.stub.createCompositeKey(this.name, ['transition', transitionId]);
 	    const transition = await getAssetJSON(ctx, transitionKey);
 	    const net = await getAssetJSON(ctx, netKey);
-	    if(!net || transition) {
+	    if(!net || !transition) {
 		throw new Error(`Could not proceed with CompleteTransition as an asset was not found!`);
 	    }
 
-	    const inputPlaces = getInputsById(net, transitionId)
-		    .filter(p => { p.type == 'place'})
-		    .forEach(p => {
+	    const effectedPlaces = [];
 
-			    placeKey = ctx.stub.CompositeKey(this.name, ['place', p.id]);
-			    place = getAssetJSON(ctx, placeKey);
-			    if(place.owner != myOrgId) {
-				    throw new Error(`You do not own place.`);
-			    }
+	    const inputPlaces = getInputsById(net, transitionId)
+		    .filter(p => { 
+			    console.log(`CompleteT: ${JSON.stringify(p)}`); 
+			    return (p.type == 'place') })
+		    .forEach(async p => {
+
+			    const placeKey = ctx.stub.createCompositeKey(this.name, ['place', p.id]);
+			    const place = await getAssetJSON(ctx, placeKey);
+			    console.log(`CompleteTransition: ${JSON.stringify(place)}`);
+			    //if(place.owner != myOrgId) {
+			//	    throw new Error(`You do not own place.`);
+			  //  }
 			    place.tokens.pop();
-	    		    ctx.stub.putState(placeKey, Buffer.from(JSON.stringify(place)));
+			    effectedPlaces.push(place);
+	    		    await ctx.stub.putState(placeKey, Buffer.from(JSON.stringify(place)));
 		    })
 	    transition.status = "READY"
 	    await ctx.stub.putState(transitionKey, Buffer.from(JSON.stringify(transition)));
 	    return {
-		    action: "CompletedTransition"
+		    action: "CompletedTransition",
+		    effectedPlaces: effectedPlaces
 	    }
 
     }

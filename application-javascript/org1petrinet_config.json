@@ -6,7 +6,7 @@
 		{ "id": "F001", "color": "blue" }
 	],
 	"transitions": [
-		{ "id": "T002", "action": { "type": "nl.dl4ld.webhook", "webhookURI": "https://webhook.site/adf99fa2-ff3f-4458-b6ae-3f1b0827f26e" }}
+		{ "id": "T002", "action": { "type": "nl.dl4ld.webhook", "webhookURI": "https://webhook.site/13f5cfd1-92a4-4438-adf0-0d442a8c626c" }}
 	],
 	"nets": [
 		{

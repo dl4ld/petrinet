@@ -11,6 +11,7 @@ const jwt = require('jsonwebtoken');
 const https = require('https');
 const url = require('url');
 const fs = require('fs');
+const async = require('async');
 const commandLineArgs = require('command-line-args');
 const { buildCAClient, registerAndEnrollUser, enrollAdmin } = require('../../test-application/javascript/CAUtil.js');
 const AppUtils = require('../../test-application/javascript/AppUtil.js');
@@ -191,6 +192,18 @@ function showTransactionData(transactionData) {
 	}
 }
 
+async function completeTransition(ctx, netId, transitionId) {
+	try {
+		console.log(`${GREEN}--> Submit Transaction: CompleteTransition, ${transitionId}, ${netId}`);
+		const transaction = ctx.contract.createTransaction('CompleteTransition');
+		const resultBuffer = await transaction.submit(netId, transitionId);
+		const result = resultBuffer.toString('utf8');
+		console.log(`${GREEN}<-- Submit CompleteTransaction Result: committed ${result}`);
+	} catch (createError) {
+		console.log(`${RED}<-- Submit Failed: CreateToken - ${createError}${RESET}`);
+	}
+}
+
 async function createAndMoveToken(ctx, netId, placeId) {
 	const tokenId = 'T' + (Math.floor(Math.random() * 99) + 1);
 	//create
@@ -205,15 +218,20 @@ async function createAndMoveToken(ctx, netId, placeId) {
 		console.log(`${RED}<-- Submit Failed: CreateToken - ${createError}${RESET}`);
 	}
 	//move
-	try {
+	async.retry({times:5, interval: 5000}, function(cb){
 		console.log(`${GREEN}--> Submit Transaction: PutToken`);
 		const transaction = ctx.contract.createTransaction('PutToken');
-		const resultBuffer = await transaction.submit(tokenId, netId, placeId);
-		const asset = resultBuffer.toString('utf8');
-		console.log(`${GREEN}<-- Submit PutToken Result: committed, asset ${asset}`);
-	} catch (createError) {
-		console.log(`${RED}<-- Submit Failed: PutToken - ${createError}${RESET}`);
-	}
+		transaction.submit(tokenId, netId, placeId)
+			.then(resultBuffer => {
+				const asset = resultBuffer.toString('utf8');
+				console.log(`${GREEN}<-- Submit PutToken Result: committed, asset ${asset}`);
+				cb(null, asset);
+			})
+			.catch(err => {
+				console.log(`${RED}<-- Submit Failed: PutToken - ${err}${RESET}`);
+				cb(err, null);
+			});
+	})
 }
 
 async function handleNewNet(ctx, event) {
@@ -250,8 +268,9 @@ function eventHandler(ctx, event) {
 					if(handler) {
 						console.log(`${GREEN}--> Calling transition handler for ${asset.action.type}${RESET}`);
 						handler(ctx, event)
-							.then(()=>{
+							.then(async ()=>{
 								console.log(`${GREEN}<-- Finished transition handler for ${asset.action.type}${RESET}`);
+								await completeTransition(ctx, asset.net, asset.id);
 								asset.outputs.forEach(o => {
 									createAndMoveToken(ctx, asset.net, o.id);
 								});

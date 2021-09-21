@@ -5,7 +5,7 @@
 	"tokens": [
 	],
 	"transitions": [
-		{ "id": "T001", "action": { "type": "nl.dl4ld.webhook", "webhookURI": "https://webhook.site/0df368e0-001e-4786-a680-87af8c7b17b6" }}
+		{ "id": "T001", "action": { "type": "nl.dl4ld.webhook", "webhookURI": "https://webhook.site/18021284-ea09-47aa-a445-c7b11e09e008" }}
 	],
 	"nets": [
 		{
