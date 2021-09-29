@@ -1,19 +1,20 @@
 {
 	"places": [
-		{"id": "P001"}
+		{"id": "P001", "isLocked": false}
 	],
 	"tokens": [
-		{ "id": "F001", "color": "blue" }
+		{ "id": "F001", "color": "blue" },
+		{ "id": "F002", "color": "blue" }
 	],
 	"transitions": [
-		{ "id": "T002", "action": { "type": "nl.dl4ld.webhook", "webhookURI": "https://webhook.site/13f5cfd1-92a4-4438-adf0-0d442a8c626c" }}
+		{ "id": "T001", "action": { "type": "nl.dl4ld.webhook", "webhookURI": "https://webhook.site/13f5cfd1-92a4-4438-adf0-0d442a8c626c" }}
 	],
 	"nets": [
 		{
 			"id": "N001",
 			"admin": "Org1MSP",
 			"config": {
-				"kbound": 1
+				"k": 1
 			},
 			"arcs": [
 				{ "src": {"type": "place",	"id": "P001"}, "dst": { "type": "transition", "id": "T001"}},
@@ -27,6 +28,7 @@
 			{ "cmd": "move", "net": "N001", "token": "F001", "place": "P001" }
 	],
 	"other":[
-			{ "cmd": "delete", "asset": "transition", "id": "T001" }
+			{ "cmd": "delete", "asset": "transition", "id": "T001" },
+			{ "cmd": "move", "net": "N001", "token": "F002", "place": "P001" }
 	]
 }

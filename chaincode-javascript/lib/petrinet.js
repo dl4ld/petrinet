@@ -69,21 +69,14 @@ class Petrinet extends Contract {
 	    // Check if token and place are owned by same org.
 	    // If owners are different; transfer ownership.
 	    if(token.owner != place.owner) {
+		// Check if place is locked by owner.
+		if(place.isLocked == true) {
+		    throw new Error(`Only place owner can put token in ${place.id}`);
+		}
 		// Place is not mine hence transfer token to place owner
 		token.owner = place.owner;
 		// Update token asset
 		await putAssetJSON(ctx, tokenKey, token)
-
-		/*const eventData = {
-			token: tokenId,
-			place: placeId,
-			net: netId
-		}
-		const eventDataBuffer = Buffer.from(JSON.stringify(eventData));
-		await ctx.stub.setEvent('TransitionRequest', eventDataBuffer);
-		return {
-			action: 'TransitionRequest'
-		}*/
 	    }
 
 	    // Check if Place can accept tokens.
@@ -133,7 +126,7 @@ class Petrinet extends Contract {
 		    	} else {
 				const transition = JSON.parse(t)
 				if(transition.status == 'FIRING') {
-					throw new Error(`Transition ${a.dst.id} is already firing.`);
+					//throw new Error(`Transition ${a.dst.id} is already firing.`);
 				}
 
 				firedTransitions.push(transition)
@@ -176,17 +169,17 @@ class Petrinet extends Contract {
 
 	    const inputPlaces = getInputsById(net, transitionId)
 		    .filter(p => { 
-			    console.log(`CompleteT: ${JSON.stringify(p)}`); 
 			    return (p.type == 'place') })
 		    .forEach(async p => {
 
 			    const placeKey = ctx.stub.createCompositeKey(this.name, ['place', p.id]);
 			    const place = await getAssetJSON(ctx, placeKey);
-			    console.log(`CompleteTransition: ${JSON.stringify(place)}`);
-			    //if(place.owner != myOrgId) {
-			//	    throw new Error(`You do not own place.`);
-			  //  }
+			    if(place.owner != myOrgId) {
+				    throw new Error(`You do not own place.`);
+			    }
+			    console.log(`CompleteTransaction ${JSON.stringify(place)}`);
 			    place.tokens.pop();
+			    console.log(`Tokens ${place.tokens.length}`);
 			    effectedPlaces.push(place);
 	    		    await ctx.stub.putState(placeKey, Buffer.from(JSON.stringify(place)));
 		    })
@@ -229,8 +222,9 @@ class Petrinet extends Contract {
 
     }
 
-    async CreateNet(ctx, netId, netJSON) {
-	    const net = JSON.parse(netJSON);
+    async CreateNet(ctx, netId, netArcs, details) {
+	    const arcs = JSON.parse(netArcs);
+	    const config = (details) ? JSON.parse(details) : {};
 	    const key = ctx.stub.createCompositeKey(this.name, ['net', netId]);
 	    const asset = {
 		    id: netId,
@@ -238,7 +232,7 @@ class Petrinet extends Contract {
 		    owner: ctx.clientIdentity.getMSPID(),
 		    arcs: [],
 		    domains: {},
-		    k: 1,
+		    k: config.k || 1,
 		    status: "NEW"
 	    }
 	    /*
@@ -255,7 +249,7 @@ class Petrinet extends Contract {
 	     *}
 	     */
 	    let verified = true
-	    await Promise.all(net.map(async arc => {
+	    await Promise.all(arcs.map(async arc => {
 		    if(arc.src.type == 'place') {
 	    		    const keySrc = ctx.stub.createCompositeKey(this.name, ['place', arc.src.id])
 			    const place = await getAssetJSON(ctx, keySrc);
@@ -306,7 +300,7 @@ class Petrinet extends Contract {
 	    }));
 
 	    if(verified) {
-		asset.arcs = net
+		asset.arcs = arcs
 		asset.domains[asset.owner] = { status: "Accepted" }
 		if(Object.values(asset.domains).every(d => { d.status ==  "Accepted" })) {
 			asset.status = "ACTIVE"
@@ -348,13 +342,15 @@ class Petrinet extends Contract {
 	    return net
     }
 
-    async CreatePlace(ctx, placeId) {
+    async CreatePlace(ctx, placeId, details) {
 	    const key = ctx.stub.createCompositeKey(this.name, ['place', placeId])
+	    const config = (details) ? JSON.parse(details) : {}
 	    const place = {
 		    id: placeId,
 		    issuer: ctx.clientIdentity.getID(),
 		    owner: ctx.clientIdentity.getMSPID(),
 		    tokens: [],
+		    isLocked: config.isLocked,
 		    status: "READY"
 	    }
             await ctx.stub.putState(key, Buffer.from(JSON.stringify(place)));

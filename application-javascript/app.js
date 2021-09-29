@@ -195,10 +195,11 @@ function showTransactionData(transactionData) {
 async function completeTransition(ctx, netId, transitionId) {
 	try {
 		console.log(`${GREEN}--> Submit Transaction: CompleteTransition, ${transitionId}, ${netId}`);
-		const transaction = ctx.contract.createTransaction('CompleteTransition');
-		const resultBuffer = await transaction.submit(netId, transitionId);
-		const result = resultBuffer.toString('utf8');
-		console.log(`${GREEN}<-- Submit CompleteTransaction Result: committed ${result}`);
+		//const transaction = ctx.contract.createTransaction('CompleteTransition');
+		//const resultBuffer = await transaction.submit(netId, transitionId);
+		//const result = resultBuffer.toString('utf8');
+		const result = await submit(ctx, 'CompleteTransition', netId, transitionId);
+		console.log(`${GREEN}<-- Submit CompleteTransaction Result: committed ${JSON.stringify(result)}`);
 	} catch (createError) {
 		console.log(`${RED}<-- Submit Failed: CreateToken - ${createError}${RESET}`);
 	}
@@ -210,15 +211,16 @@ async function createAndMoveToken(ctx, netId, placeId) {
 	try {
 		const assetKey = tokenId;
 		console.log(`${GREEN}--> Submit Transaction: CreateToken, ${assetKey}`);
-		const transaction = ctx.contract.createTransaction('CreateToken');
-		const resultBuffer = await transaction.submit(assetKey, {});
-		const asset = resultBuffer.toString('utf8');
+		//const transaction = ctx.contract.createTransaction('CreateToken');
+		//const resultBuffer = await transaction.submit(assetKey, {});
+		//const asset = resultBuffer.toString('utf8');
+		const asset = await submit(ctx, 'CreateToken', assetKey, {});
 		console.log(`${GREEN}<-- Submit CreateToken Result: committed, asset ${assetKey}${asset}${RESET}`);
 	} catch (createError) {
 		console.log(`${RED}<-- Submit Failed: CreateToken - ${createError}${RESET}`);
 	}
 	//move
-	async.retry({times:5, interval: 5000}, function(cb){
+	async.retry({times:50, interval: 5000}, function(cb){
 		console.log(`${GREEN}--> Submit Transaction: PutToken`);
 		const transaction = ctx.contract.createTransaction('PutToken');
 		transaction.submit(tokenId, netId, placeId)
@@ -252,6 +254,20 @@ async function handleNewNet(ctx, event) {
 		}
 
 	}
+}
+
+function submit(ctx, name, ...args) {
+	const transaction = ctx.contract.createTransaction(name);
+	return async.retry({times:50, interval: 5000}, function(cb){
+		transaction.submit(...args)
+		.then(response => {
+			cb(null, JSON.parse(response.toString('utf8')));
+		})
+		.catch(err => {
+			console.log(`${RED}<-- Submit Failed: ${name} - ${err}${RESET}`);
+			cb(err, null);
+		})
+	})
 }
 
 function eventHandler(ctx, event) {
@@ -320,7 +336,7 @@ async function main() {
 					const assetKey = p.id;
 					console.log(`${GREEN}--> Submit Transaction: CreatePlace, ${assetKey}`);
 					const transaction = contract1Org.createTransaction('CreatePlace');
-					const resultBuffer = await transaction.submit(assetKey);
+					const resultBuffer = await transaction.submit(assetKey, JSON.stringify(p));
 					const asset = resultBuffer.toString('utf8');
 					console.log(`${GREEN}<-- Submit CreatePlace Result: committed, asset ${assetKey}${asset}${RESET}`);
 				} catch (createError) {
@@ -375,9 +391,12 @@ async function main() {
 						if(n.admin != orgMSP) {
 							return
 						}
-						console.log(`${GREEN}--> Submit Net: CreateNet, ${assetKey}`);
+						const details = {
+							k: n.config.k
+						}
+						console.log(`${GREEN}--> Submit Net: CreateNet, ${assetKey} ${JSON.stringify(details)}`);
 						const transaction = contract1Org.createTransaction('CreateNet');
-						const resultBuffer = await transaction.submit(assetKey, JSON.stringify(n.arcs));
+						const resultBuffer = await transaction.submit(assetKey, JSON.stringify(n.arcs), JSON.stringify(details));
 						const asset = resultBuffer.toString('utf8');
 						console.log(`${GREEN}<-- Submit CreateNet Result: committed, asset ${assetKey}${asset}${RESET}`);
 					} catch (createError) {
