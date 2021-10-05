@@ -41,10 +41,9 @@
 				"k":1
 			},
 			"arcs": [
-				{
-					"src": { "type": "net",  "id": "N001", "node" : {"type": "transition", "id": "T001"}}, 
-					"dst": { "type": "net",  "id": "N002", "node" : {"type": "place", "id": "P002"}}
-				}
+				{ "src": { "type": "net",  "id": "N001"},  "dst": { "type": "net",  "id": "N002"}},
+				{ "src": {"type": "transition",	"id": "T001"}, "dst": { "type": "place", "id": "P002"}},
+				{ "src": {"type": "transition",	"id": "T002"}, "dst": { "type": "place", "id": "P001"}}
 			]
 
 		}

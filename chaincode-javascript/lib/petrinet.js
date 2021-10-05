@@ -284,7 +284,7 @@ class Petrinet extends Contract {
 
 			    console.log(`Connecting subnets: ${JSON.stringify(netSrc)} to ${JSON.stringify(netDst)}`)
 
-			    const keyNodeSrc = ctx.stub.createCompositeKey(this.name, [arc.src.node.type, arc.src.node.id])
+			    /*const keyNodeSrc = ctx.stub.createCompositeKey(this.name, [arc.src.node.type, arc.src.node.id])
 			    const nodeSrc = await getAssetJSON(ctx, keyNodeSrc)
 			    
 			    const keyNodeDst = ctx.stub.createCompositeKey(this.name, [arc.dst.node.type, arc.dst.node.id])
@@ -300,12 +300,13 @@ class Petrinet extends Contract {
 
 			    asset.domains[nodeDst.owner] = {status: "NotAccepted"}
 			    asset.domains[nodeSrc.owner] = {status: "NotAccepted"}
-			    asset.arcs = netSrc.arcs.concat(netDst.arcs);
 			    const newArc = {
 				    "src": arc.src.node,
 				    "dst": arc.dst.node
 				    }
-			    asset.arcs.push(newArc);
+			    asset.arcs.push(newArc);*/
+			    
+			    asset.arcs = netSrc.arcs.concat(netDst.arcs);
 
 			    console.log(`New Net from subnets: ${JSON.stringify(asset)}`)
 
