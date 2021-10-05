@@ -13,6 +13,7 @@
 		{
 			"id": "N001",
 			"admin": "Org1MSP",
+			"disabled": "true",
 			"config": {
 				"k": 1
 			},
@@ -22,10 +23,34 @@
 				{ "src": {"type": "place",	"id": "P002"}, "dst": { "type": "transition", "id": "T002"}},
 				{ "src": {"type": "transition",	"id": "T002"}, "dst": { "type": "place", "id": "P001"}}
 			]
+		},
+		{
+			"id": "N001",
+			"admin": "Org1MSP",
+			"config": {
+				"k": 1
+			},
+			"arcs": [
+				{ "src": {"type": "place",	"id": "P001"}, "dst": { "type": "transition", "id": "T001"}}
+			]
+		},
+		{
+			"id": "N003",
+			"admin": "Org1MSP",
+			"config": {
+				"k":1
+			},
+			"arcs": [
+				{
+					"src": { "type": "net",  "id": "N001", "node" : {"type": "transition", "id": "T001"}}, 
+					"dst": { "type": "net",  "id": "N002", "node" : {"type": "place", "id": "P002"}}
+				}
+			]
+
 		}
 	],
 	"instructions": [
-			{ "cmd": "move", "net": "N001", "token": "F001", "place": "P001" }
+			{ "cmd": "move", "net": "N003", "token": "F001", "place": "P001" }
 	],
 	"other":[
 			{ "cmd": "delete", "asset": "transition", "id": "T001" },

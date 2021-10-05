@@ -36,6 +36,25 @@ function isSpaceInPlace(net, place) {
 	
 }
 
+function isEmpty(obj) {
+    // null and undefined are "empty"
+    if (obj == null) return true;
+
+    // Assume if it has a length property with a non-zero value
+    // that that property is correct.
+    if (obj.length && obj.length > 0)    return false;
+    if (obj.length === 0)  return true;
+
+    // Otherwise, does it have any properties of its own?
+    // Note that this doesn't handle
+    // toString and toValue enumeration bugs in IE < 9
+    for (var key in obj) {
+        if (hasOwnProperty.call(obj, key)) return false;
+    }
+
+    return true;
+}
+
 class Petrinet extends Contract {
 
     constructor() {
@@ -250,6 +269,48 @@ class Petrinet extends Contract {
 	     */
 	    let verified = true
 	    await Promise.all(arcs.map(async arc => {
+		    if(arc.src.type == 'net') {
+			    const keyNetSrc = ctx.stub.createCompositeKey(this.name, ['net', arc.src.id])
+			    const netSrc = await getAssetJSON(ctx, keyNetSrc)
+			    
+			    const keyNetDst = ctx.stub.createCompositeKey(this.name, ['net', arc.dst.id])
+			    const netDst = await getAssetJSON(ctx, keyNetDst)
+
+			    if(isEmpty(netSrc) || isEmpty(netDst)) {
+				    console.log(`Failed connecting netss.`);
+				    verified = false
+				    return
+			    }
+
+			    console.log(`Connecting subnets: ${JSON.stringify(netSrc)} to ${JSON.stringify(netDst)}`)
+
+			    const keyNodeSrc = ctx.stub.createCompositeKey(this.name, [arc.src.node.type, arc.src.node.id])
+			    const nodeSrc = await getAssetJSON(ctx, keyNodeSrc)
+			    
+			    const keyNodeDst = ctx.stub.createCompositeKey(this.name, [arc.dst.node.type, arc.dst.node.id])
+			    const nodeDst = await getAssetJSON(ctx, keyNodeDst)
+
+			    if(isEmpty(nodeSrc) || isEmpty(nodeDst)) {
+				    console.log(`Failed connecting nets.`);
+				    verified = false
+				    return
+			    }
+			    
+			    console.log(`At nodes: ${JSON.stringify(nodeSrc)} to ${JSON.stringify(nodeDst)}`)
+
+			    asset.domains[nodeDst.owner] = {status: "NotAccepted"}
+			    asset.domains[nodeSrc.owner] = {status: "NotAccepted"}
+			    asset.arcs = netSrc.arcs.concat(netDst.arcs);
+			    const newArc = {
+				    "src": arc.src.node,
+				    "dst": arc.dst.node
+				    }
+			    asset.arcs.push(newArc);
+
+			    console.log(`New Net from subnets: ${JSON.stringify(asset)}`)
+
+
+		    }
 		    if(arc.src.type == 'place') {
 	    		    const keySrc = ctx.stub.createCompositeKey(this.name, ['place', arc.src.id])
 			    const place = await getAssetJSON(ctx, keySrc);
@@ -272,6 +333,7 @@ class Petrinet extends Contract {
 			    asset.domains[transition.owner] = {
 				    status: "NotAccepted"
 			    }
+			    asset.arcs.push(arc);
 		    }
 
 		    if(arc.src.type == 'transition') {
@@ -296,11 +358,12 @@ class Petrinet extends Contract {
 			    asset.domains[place.owner] = {
 				    status: "NotAccepted"
 			    }
+			    asset.arcs.push(arc);
 		    }
 	    }));
 
 	    if(verified) {
-		asset.arcs = arcs
+		//asset.arcs = arcs
 		asset.domains[asset.owner] = { status: "Accepted" }
 		if(Object.values(asset.domains).every(d => { d.status ==  "Accepted" })) {
 			asset.status = "ACTIVE"

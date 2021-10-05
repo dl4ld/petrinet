@@ -11,6 +11,7 @@
 		{
 			"id": "N001",
 			"admin": "Org1MSP",
+			"disabled": "true",
 			"config": {
 				"k": 1
 			},
@@ -19,6 +20,16 @@
 				{ "src": {"type": "transition",	"id": "T001"}, "dst": { "type": "place", "id": "P002"}},
 				{ "src": {"type": "place",	"id": "P002"}, "dst": { "type": "transition", "id": "T002"}},
 				{ "src": {"type": "transition",	"id": "T002"}, "dst": { "type": "place", "id": "P001"}}
+			]
+		},
+		{
+			"id": "N002",
+			"admin": "Org2MSP",
+			"config": {
+				"k": 1
+			},
+			"arcs": [
+				{ "src": {"type": "place",	"id": "P002"}, "dst": { "type": "transition", "id": "T002"}}
 			]
 		}
 	],

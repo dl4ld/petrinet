@@ -238,6 +238,10 @@ async function createAndMoveToken(ctx, netId, placeId) {
 
 async function handleNewNet(ctx, event) {
 	const net = JSON.parse(event.payload.toString('utf8'));
+	if(!net.domains[orgMSP]) {
+		console.log(`${BLUE} Nothing to do with net ${net.id}`);
+		return
+	}
 	if(net.domains[orgMSP]["status"] == "NotAccepted") {
 		// check if we should accept
 		// TODO
@@ -267,7 +271,7 @@ function submit(ctx, name, ...args) {
 			console.log(`${RED}<-- Submit Failed: ${name} - ${err}${RESET}`);
 			cb(err, null);
 		})
-	})
+	});
 }
 
 function eventHandler(ctx, event) {
@@ -384,21 +388,25 @@ async function main() {
 
 			Promise.all([...places, ...tokens, ...transitions]).then((values) => {
 				// Create Petrinet assets
-				const nets = assets.nets.map(async n => {
+				const nets = assets.nets
+					.filter(n => {
+						return (!n.disabled && n.admin == orgMSP)
+					})
+					.map(async n => {
 					try {
 
 						const assetKey = n.id;
-						if(n.admin != orgMSP) {
-							return
-						}
+						//if(n.admin != orgMSP) {
+						//	return
+						//}
 						const details = {
 							k: n.config.k
 						}
-						console.log(`${GREEN}--> Submit Net: CreateNet, ${assetKey} ${JSON.stringify(details)}`);
+						console.log(`${GREEN}--> Submit Net: CreateNet, ${assetKey} ${JSON.stringify(n)}`);
 						const transaction = contract1Org.createTransaction('CreateNet');
-						const resultBuffer = await transaction.submit(assetKey, JSON.stringify(n.arcs), JSON.stringify(details));
+						const resultBuffer = await submit(context, 'CreateNet', assetKey, JSON.stringify(n.arcs), JSON.stringify(details));
 						const asset = resultBuffer.toString('utf8');
-						console.log(`${GREEN}<-- Submit CreateNet Result: committed, asset ${assetKey}${asset}${RESET}`);
+						console.log(`${GREEN}<-- Submit CreateNet Result: committed, asset ${assetKey}${JSON.stringify(asset)}${RESET}`);
 					} catch (createError) {
 						console.log(`${RED}<-- Submit Failed: CreateNet - ${createError}${RESET}`);
 					}
