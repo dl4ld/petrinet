@@ -55,6 +55,54 @@ function isEmpty(obj) {
     return true;
 }
 
+async function getAllResults(iterator, isHistory) {
+        let allResults = [];
+        let res = { done: false, value: null };
+
+        while (true) {
+            res = await iterator.next();
+            let jsonRes = {};
+            if (res.value && res.value.value.toString()) {
+                if (isHistory && isHistory === true) {
+                    //jsonRes.TxId = res.value.tx_id;
+                    jsonRes.TxId = res.value.txId;
+                    jsonRes.Timestamp = res.value.timestamp;
+                    jsonRes.Timestamp = new Date((res.value.timestamp.seconds.low * 1000));
+                    let ms = res.value.timestamp.nanos / 1000000;
+                    jsonRes.Timestamp.setMilliseconds(ms);
+                    if (res.value.is_delete) {
+                        jsonRes.IsDelete = res.value.is_delete.toString();
+                    } else {
+                        try {
+                            jsonRes.Value = JSON.parse(res.value.value.toString('utf8'));
+                        } catch (err) {
+                            console.log(err);
+                            jsonRes.Value = res.value.value.toString('utf8');
+                        }
+                    }
+                } else { // non history query ..
+                    jsonRes.Key = res.value.key;
+                    try {
+                        jsonRes.Record = JSON.parse(res.value.value.toString('utf8'));
+                    } catch (err) {
+                        console.log(err);
+                        jsonRes.Record = res.value.value.toString('utf8');
+                    }
+                }
+		allResults.push(jsonRes);
+	    }
+            // check to see if we have reached the end
+            if (res.done) {
+                // explicitly close the iterator 
+                console.log('iterator is done');
+                await iterator.close();
+                return allResults;
+            }
+
+        }  // while true
+    }
+
+
 class Petrinet extends Contract {
 
     constructor() {
@@ -386,6 +434,26 @@ class Petrinet extends Contract {
             	throw new Error(`The net ${netId} does not exist`);
 	    }
 	    return net.toString();
+    }
+
+    async GetAllTokens(ctx) {
+	    const resultsIterator = await ctx.stub.getStateByPartialCompositeKey(this.name, ['token']);
+	    return getAllResults(resultsIterator, false);
+    }
+    
+    async GetAllPlaces(ctx) {
+	    const resultsIterator = await ctx.stub.getStateByPartialCompositeKey(this.name, ['place']);
+	    return getAllResults(resultsIterator, false);
+    }
+    
+    async GetAllTransitions(ctx) {
+	    const resultsIterator = await ctx.stub.getStateByPartialCompositeKey(this.name, ['transition']);
+	    return getAllResults(resultsIterator, false);
+    }
+
+    async GetAllNets(ctx) {
+	    const resultsIterator = await ctx.stub.getStateByPartialCompositeKey(this.name, ['net']);
+	    return getAllResults(resultsIterator, false);
     }
 
     async AcceptNet(ctx, netId) {

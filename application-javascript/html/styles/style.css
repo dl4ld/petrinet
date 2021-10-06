@@ -1,0 +1,469 @@
+html {
+  overflow: hidden;
+}
+body {
+  margin: 0;
+  overflow: hidden;
+}
+*, ::before, ::after {
+  box-sizing: initial;
+}
+#update {
+  transform-style: preserve-3d;
+  transform-origin: left top;
+/* transform: rotateX(60deg) rotateZ(-22deg) translateX(-3em) translateZ(-1em); */
+  transform: rotateX(65deg) rotateZ(22deg) translateX(11em) translateZ(1em);
+  width: 2000px;
+  height: 2000px;
+}
+.namespace {
+  border: 0px solid #455A64;
+  border-radius: 5px;
+/* box-shadow: 0 0 1px 0px white inset, 0 0 1px 0px white; */
+  padding: 20px 10px 10px 10px;
+  position: relative;
+  display: inline-block;
+  width: 400px;
+  height: 340px;
+  position: relative;
+  float: left;
+  margin-right: 100px;
+  margin-bottom: 20px;
+  transform-style: preserve-3d;
+/*   transform: rotateX(60deg) rotateZ(-35deg); */
+}
+#trusted {
+  margin-top: 250px;
+  margin-left: 250px;
+}
+.item {
+  margin-top: 10px;
+  margin-left: 10px;
+  position: relative;
+  float: left;
+  height: 40px;
+  width: 40px;
+  transform-style: preserve-3d;
+  transform: translateZ(20px) translateY(30px) rotateZ(-22deg) rotateX(-65deg) scale(0.8);
+}
+.capitem {
+  position: relative;
+  float: left;
+  background-color: rgb(109, 158, 235);
+  border: 1px solid black;
+  border-radius: 50%;
+/*   box-shadow: 0 0 1px 0px white inset, 0 0 1px 0px white; */
+  padding: 10px;
+  line-height: 1em;
+  text-align: center;
+  color: white;
+  height: 16px;
+  width: 16px;
+}
+.header-logo {
+  position: relative;
+  float: right;
+  height: 1.5em;
+  margin-left: 1em;
+}
+/* Settings */
+#settings{
+  height: 100%;
+  width: 12%;
+  position: fixed;
+  border-right: 1px solid black;
+  overflow: hidden;
+}
+#programs {
+  height: 60%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.program {
+  background-color: #ddd;
+}
+._program_ {
+  border: 1px solid black;
+  margin: 10px;
+  padding: 5px;
+  background-color: #ddd;
+  border-radius: 5px;
+}
+#legend {
+  border-top: 1px solid black;
+}
+.legend-arrow {
+  height: 45px;
+  width: 100%;
+  text-align: center;
+  margin-top: 1em;
+}
+.legend-oex {
+  height: 90px;
+  width: 100%;
+  text-align: center;
+  margin-top: 1em;
+}
+.legend-object {
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  left: 0px;
+  margin-top: -40px;
+}
+.marker-l {
+  height: 20px;
+  width: 20px;
+  position: absolute;
+  left: -20px;
+  margin-top: 0px;
+}
+.marker-r {
+  height: 20px;
+  width: 20px;
+  position: absolute;
+  right: 30px;
+  margin-top: 0px;
+}
+#legend-de {
+  background-image: url('icon/de_icon.png');
+  background-size: contain;
+  height: 80px;
+  width: 56px;
+  transform: scale(0.5);
+  position: absolute;
+  margin-top: -20px;
+}
+#main {
+  margin-left: 12%;
+  padding-top: 10%;
+  height: 75%;
+  width: 65%;
+  overflow: hidden;
+}
+#bottom {
+  height: 55%;
+  width: 100%;
+  border: 1px solid black;
+  }
+#top {
+  height: 40%;
+  width: 100%;
+  }
+#runBtn {
+	height: 5%
+}
+
+#console {
+  height: 100%;
+  width: 25%;
+  right: 0;
+  overflow: hidden;
+
+}
+#auditLogWrapper {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow-y: auto;
+}
+#auditLog {
+  padding: 1em;
+  padding-bottom: 3em;
+}
+.border-label {
+  position: absolute;
+  top: -15px;
+  left: 20px;
+  background-color: white;
+  transform: rotateX(-90deg) translateY(-0.2em) translateZ(0.5em);
+}
+.logo {
+  height: 2em;
+  margin-right: 1em;
+}
+.cap {
+  width: 199px;
+  position: relative;
+  float: left;
+  height: 60%;
+/*   border-right: 1px solid black; */
+/*   box-shadow: 0 0 1px 0px white inset, 0 0 1px 0px white; */
+  transform-style: preserve-3d;
+}
+.res {
+  background-color: #bcbcbc;
+  position: relative;
+  float: left;
+  width: 400px; 
+  height: 60%;
+  transform-style: preserve-3d;
+}
+.dock-side {
+  width: 10px;
+  height: 100%;
+  background-color: #454545;
+  right: 0px;
+  position: absolute;
+  transform: rotateY(90deg) translateX(5px) translateZ(5px);
+}
+.dock-front {
+  width: 100%;
+  height: 10px;
+  background-color: #7b7b7b;
+  bottom: 0px;
+  position: absolute;
+  transform: rotateX(90deg) translateY(-5px) translateZ(-5px);
+}
+.dock-border-side {
+  width: 10px;
+  height: 100%;
+  right: 0px;
+  background-color: #454545;
+  position: absolute;
+  transform: rotateY(90deg) translateX(5px) translateZ(5px);
+}
+.dock-border-front {
+  width: 100%;
+  height: 10px;
+  bottom: 0px;
+  background-color: #7b7b7b;
+  position: absolute;
+  transform: rotateX(90deg) translateY(-5px) translateZ(-5px);
+}
+.ext {
+  position: relative;
+  float: left;
+  width: 90%;
+  height: 40%;
+  border-top: 0px solid black;
+/*   box-shadow: 0 0 1px 0px white inset, 0 0 1px 0px white; */
+  transform-style: preserve-3d;
+  background-color: #bfdbee;
+  transform: translateZ(-10px);
+}
+.border {
+  position: relative;
+  background-color: #bcbcbc;
+  float: left;
+  width: 10%;
+  height: 40%;
+  border-top: 0px solid black;
+/*   box-shadow: 0 0 1px 0px white inset, 0 0 1px 0px white; */
+  transform-style: preserve-3d;
+}
+.de {
+  margin-top: 10px;
+  margin-left: 10px;
+  position: relative;
+  background-image: url('icon/de_icon.png');
+  background-size: contain;
+  float: left;
+  height: 80px;
+  width: 56px;
+  transform-style: preserve-3d;
+  transform: rotateZ(-22deg) rotateX(-60deg) scale(0.8) translateZ(56px) translateX(-40px) rotateZ(-16deg);
+}
+#trusted .ext {
+  border-bottom: 0px solid black;
+  border-top: 0px;
+}
+#trusted .border {
+  border-bottom: 0px solid black;
+  border-top: 0px;
+}
+.square {
+  width: 38px;
+  height: 38px;
+  position: relative;
+  float: left;
+}
+.squareTop {
+  width: 29px;
+  height: 8px;
+  -ms-transform: skew(-45.0deg, 0deg);
+  -webkit-transform: skew(-45.0deg, 0deg);
+  transform: skew(-45.0deg, 0deg);
+  margin-left: 4px;
+  position: absolute;
+  background-color: #eeff41;
+  border-top: 1px solid black;
+  border-left: 1px solid black;
+  box-shadow: 0 0 1px 0px white inset, 0 0 1px 0px white;
+}
+.squareMain {
+  border: 1px solid black;
+  background-color: rgb(255, 217, 102);
+  width: 28px;
+  height: 28px;
+  position: absolute;
+  top: 8px;
+  box-shadow: 0 0 1px 0px white inset, 0 0 1px 0px white;
+  background-image: url('../img/singularity.png');
+  background-size: contain;
+}
+.squareRight {
+  width: 7px;
+  height: 28px;
+  -ms-transform: skew(0deg, -45deg);
+  -webkit-transform: skew(0deg, -45deg);
+  transform: skew(0deg, -45deg);
+  position: absolute;
+  left: 30px;
+  top: 4px;
+  background-color: #ffab40;
+  border: 1px solid black;
+  border-left: 0px;
+  box-shadow: 0 0 1px 0px white inset, 0 0 1px 0px white;
+}
+.stake {
+  border-left: 1px solid #000000;
+  border-right: 1px solid #000000;
+  width: 38px;
+  height: 25px;
+  top: 6px;
+  display: inline-block;
+  position: relative;
+  float:left;
+  background-color: rgb(224, 102, 102);
+}
+.stake:before {
+  content: '';
+  display: inline-block;
+  width: 38px;
+  height: 8px;
+  background: rgb(234, 153, 153);
+  border: 1px solid #000000;
+  border-radius: 100px / 25px;
+  position: absolute;
+  left: -1px;
+  top: -6px;
+  z-index: 2;
+  box-shadow: 0 0 1px 0px white inset, 0 0 1px 0px white;
+}
+.stake:after {
+  content: '';
+  display: inline-block;
+  width: 38px;
+  height: 12px;
+  background: rgb(224, 102, 102);
+  border: 1px solid #000000;
+  border-radius: 100px / 25px;
+  position: absolute;
+  left: -1px;
+  bottom: -7px;
+  z-index: -1;
+  box-shadow: 0 0 1px 0px white inset, 0 0 1px 0px white;
+}
+.result {
+  width: 38px;
+  height: 38px;
+  background-size: contain;
+  background-image: url( 'icon/result.png');
+}
+/* Terminal */
+.termSuccess span {
+  color: green;
+}
+/* Tooltip */
+.tooltip {	
+    position: absolute;
+    text-align: center;
+    width: 120px;
+    height: auto;
+    font: 12px sans-serif;
+/*     background: lightblue; */
+    z-index: 4;
+}
+.tooltipHeader {
+  width: 100%;
+  height: auto;
+  overflow: auto;
+  background-color: #bbb;
+  border: 0px;
+  border-top-right-radius: 8px;
+  border-top-left-radius: 8px;
+}
+.tooltipTitle {
+  position: relative;
+  float: left;
+  width: 100px;
+  padding-left: 8px;
+}
+#tooltipRemove {
+  position: relative;
+  float: left;
+  width: 1em;
+  padding-left: 0px;
+}
+.tooltipContent {
+  text-align: left;
+  background-color: #eee;
+  padding: 8px;
+  border: 0px;
+  border-bottom-right-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+line {
+    stroke: steelblue;
+    stroke-width: 12px;
+    stroke-linecap: round;
+}
+svg {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+}
+#svg {
+  z-index: 5;
+}
+@keyframes rotating
+	{
+	from
+		{
+		transform: rotate(0deg);
+		-o-transform: rotate(0deg);
+		-ms-transform: rotate(0deg);
+		-moz-transform: rotate(0deg);
+		-webkit-transform: rotate(0deg);
+		}
+	to
+		{
+		transform: rotate(360deg);
+		-o-transform: rotate(360deg);
+		-ms-transform: rotate(360deg);
+		-moz-transform: rotate(360deg);
+		-webkit-transform: rotate(360deg);
+		}
+	}
+@-webkit-keyframes rotating
+	{
+	from
+		{
+		transform: rotate(0deg);
+		-webkit-transform: rotate(0deg);
+		}
+	to
+		{
+		transform: rotate(360deg);
+		-webkit-transform: rotate(360deg);
+		}
+}
+.rotating
+{
+  -webkit-animation: rotating 4s linear infinite;
+  -moz-animation: rotating 4s linear infinite;
+  -ms-animation: rotating 4s linear infinite;
+  -o-animation: rotating 4s linear infinite;
+  animation: rotating 4s linear infinite;
+}
+.denied-cross {
+  width: 40px;
+  height: 40px;
+  transform-origin: left top;
+  transform: scale(0.8);
+  background-image: url('../img/denied.png');
+  background-size: contain;
+}

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+        <title>petrinet</title>
+<meta charset="UTF-8"> 
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="html/styles/style.css">
+<link rel="stylesheet" href="html/styles/w3.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Allerta+Stencil">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jerosoler/Drawflow/dist/drawflow.min.css">
+<script src="https://cdn.jsdelivr.net/gh/jerosoler/Drawflow/dist/drawflow.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/gh/jerosoler/Drawflow/dist/drawflow.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/js/all.min.js" integrity="sha256-KzZiKy0DWYsnwMF+X1DvQngQ2/FxF7MF3Ff72XcpuPs=" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jerosoler/Drawflow@0.0.48/dist/drawflow.min.css">
+  <link rel="stylesheet" type="text/css" href="/html/beautiful.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css" integrity="sha256-h20CPZ0QyXlBuAw7A+KluUYx/3pK+c7lYEpqLTlxjYQ=" crossorigin="anonymous" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+  <script src="https://unpkg.com/micromodal/dist/micromodal.min.js"></script>
+<head>
+</head>
+
+<style>
+html, body{
+        height:100%;
+        width:100%;
+}
+</style>
+
+
+<script src="html/scripts/jquery-3.3.1.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+
+<body>
+  <script>
+	  $.when( $.ready ).then(function() {
+
+		var id = document.getElementById("drawflow");
+                //id.setAttribute("style", "height:" + window.innerHeight + "px;width:" +window.innerWidth/2+"px;")
+                id.setAttribute("style", "height:" + window.innerHeight + "px;width:" +window.innerWidth+"px;")
+		const editor = new Drawflow(id);
+		editor.start();
+
+		// open web socket
+                socket = io()
+                socket.emit('ready', '');
+
+                socket.on('net', function(data) {
+                        console.log("nets> ", data);
+                        try{
+                                nets = JSON.parse(data);
+				nets.forEach(function(n)  {
+					const draw = {
+						drawflow: {
+							Home: {
+								data: {}
+							}
+						}
+					}
+					const d = draw.drawflow.Home.data;
+					n.Record.arcs.forEach(function(arc, c) {
+						const src = arc.src;
+						const dst = arc.dst;
+						const i = c*2;
+						if(d[src.id]) {
+							d[src.id].outputs = {
+								output_1: {
+									connections: [ {node: dst.id,output: "input_1"} ]
+								}
+							}
+						} else {
+							d[src.id] = {
+								id: src.id,
+								pos_x:(i*200),
+								pos_y:0,
+								name: src.id,
+								data: src,
+								class: src.type,
+								html: `<div>${src.id}</div>`,
+								typenode:false,
+								inputs: {},
+								outputs: {
+									output_1: {
+										connections: [ {node: dst.id,output: "input_1"} ]
+									}
+								}
+
+							}
+						}
+						if(d[dst.id]) {
+							d[dst.id].inputs = { 
+								input_1: {
+									connections: [ { node: src.id, input: "output_1" }]
+								}
+							}
+						} else {
+							d[dst.id] = {
+								id: dst.id,
+								pos_x:((i+1)*200),
+								pos_y:(200),
+								name: dst.id,
+								data: dst,
+								class: dst.type,
+								html: `<div>${dst.id}</div>`,
+								typenode:false,
+								inputs: {
+									input_1: {
+										connections: [ { node: src.id, input: "output_1" }]
+									}
+								},
+								outputs: {
+								}
+							}
+						}
+					})
+				console.log("importing: ", draw)
+				editor.import(draw);
+				})
+
+
+                        } catch(err) {
+                                console.log(err)
+                        }
+
+                });
+
+	  });
+
+  </script>
+    
+
+  <div id="drawflow"></div>
+  <div id="editor-pane" class="w3-border w3-display-topright"></div>
+  <div id="aux-pane" class="w3-border w3-sand w3-display-bottomright"></div>
+  <div id="notification-pane" class="w3-container w3-display-topmiddle w3-opacity"></div>
+
+</body>
+</html>

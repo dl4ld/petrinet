@@ -3,6 +3,11 @@
 		{"id": "P002", "isLocked": "false"}
 	],
 	"tokens": [
+		{"id": "F010", "color": "blue"},
+		{"id": "F011", "color": "blue"},
+		{"id": "F012", "color": "blue"},
+		{"id": "F013", "color": "blue"},
+		{"id": "F014", "color": "blue"}
 	],
 	"transitions": [
 		{ "id": "T002", "action": { "type": "nl.dl4ld.webhook", "webhookURI": "https://webhook.site/18021284-ea09-47aa-a445-c7b11e09e008" }}

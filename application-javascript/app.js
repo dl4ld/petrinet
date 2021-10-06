@@ -16,6 +16,16 @@ const commandLineArgs = require('command-line-args');
 const { buildCAClient, registerAndEnrollUser, enrollAdmin } = require('../../test-application/javascript/CAUtil.js');
 const AppUtils = require('../../test-application/javascript/AppUtil.js');
 
+
+const express = require('express');
+const app = express();
+const http = require('http')
+const bodyParser = require('body-parser');
+const socket = require('socket.io');
+const events = require('events');
+const amqp = require('amqplib');
+const eventEmitter = new events.EventEmitter();
+
 const RED = '\x1b[31m\n';
 const GREEN = '\x1b[32m\n';
 const BLUE = '\x1b[34m';
@@ -27,7 +37,13 @@ const optionDefinitions = [
 	{ name: 'channel', type: String },
 	{ name: 'net-config', type: String },
 	{ name: 'user', type: String },
-	{ name: 'plugins', type: String }
+	{ name: 'plugins', type: String },
+	{ name: 'port', alias: 'p', type: String },
+	{ name: 'https', type: Boolean },
+	{ name: 'privkey', type: String },
+	{ name: 'cert', type: String },
+	{ name: 'amqp', alias: 'm', type: String },
+	{ name: 'config', alias: 'c', type: String }
 ]
 
 const options = commandLineArgs(optionDefinitions)
@@ -55,6 +71,15 @@ function sleep(ms) {
 function block() {
 	sleep(30000).then(() => block())
 }
+
+function decode64(s) {
+	return new Buffer(s, 'base64').toString('ascii');
+}
+
+function encode64(s) {
+	return Buffer.from(s).toString('base64')
+}
+
 
 function getKeys(walletOrg1, Org1UserId) {
 	const fileName = walletOrg1.store.storePath + '/' + Org1UserId + '.id';
@@ -86,6 +111,33 @@ function loadModules(dir) {
         }
     });
 }
+
+let channel = null
+
+async function initAmqp(config) {
+	try {
+		const conn = await amqp.connect('amqp://' + config.login + ":" + config.password + "@" + config.host)
+		channel = await conn.createChannel()
+		amqpChannel = channel
+		channel.assertExchange(config.ex, 'topic', {durable:false})
+		console.log("Using amqp host: ", amqpHost)
+		console.log("Connected to amqp.")
+		
+		if(myAddress) {
+			const rk = myAddress + '.#'
+			const r = await channel.assertQueue('', {exclusive: true})
+			const q = await channel.bindQueue(r.queue, config.ex, rk)
+			channel.consume(r.queue, handler, {noAck: true})
+		} else {
+			log("Skip queue consumer.")
+		}
+
+	} catch(err) {
+		console.log(err)
+	}
+}
+
+//initAmqp(config)
 
 async function initGatewayForOrg(useCommitEvents) {
 	console.log(`${GREEN}--> Fabric client user & Gateway init: Using Org1 identity to Org1 Peer${RESET}`);
@@ -333,6 +385,7 @@ async function main() {
 				userId: userId,
 				orgMSP: orgMSP
 			}
+
 			
 			// Create place assets
 			const places = assets.places.map(async p => {
@@ -493,6 +546,138 @@ async function main() {
 		process.exit(0);
 	});
 
-	await block();
+	
+	/*setInterval(async () => {
+		try {
+			console.log(`${GREEN}--> Submit Transaction: GetAllTokens`);
+			const transaction = contract1Org.createTransaction('GetAllTokens');
+			const resultBuffer = await transaction.submit();
+			const tokens = resultBuffer.toString('utf8');
+			const JSONTokens = JSON.parse(tokens);
+			JSONTokens.forEach(t => {
+				console.log("token: ", t);
+			})
+			console.log(`${GREEN}<-- Submit GetTokens Result: ${tokens}${RESET}`);
+		} catch (createError) {
+			console.log(`${RED}<-- Submit Failed: CreatePlace - ${createError}${RESET}`);
+		}
+		
+		try {
+			console.log(`${GREEN}--> Submit Transaction: GetAllNets`);
+			const transaction = contract1Org.createTransaction('GetAllNets');
+			const resultBuffer = await transaction.submit();
+			const nets = resultBuffer.toString('utf8');
+			const JSONTokens = JSON.parse(nets);
+			JSONTokens.forEach(n => {
+				console.log("net: ", n);
+			})
+			console.log(`${GREEN}<-- Submit GetTokens Result: ${tokens}${RESET}`);
+		} catch (createError) {
+			console.log(`${RED}<-- Submit Failed: CreatePlace - ${createError}${RESET}`);
+		}
+
+	}, 5000);*/
+	
+	let server = null
+	if(options.https) {
+		const privateKey = fs.readFileSync(oprions.privkey).toString();
+		const certificate = fs.readFileSync(option.cert).toString();
+		const credentials = {key: privateKey, cert: certificate}
+		server = https.createServer(credentials, app)
+	} else {
+		server = http.createServer(app)
+	}
+
+	const io = socket(server);
+
+	//app.use(express.static(__dirname + '/'));
+	app.use(bodyParser.urlencoded({extended: true}));
+	app.use(bodyParser.json());
+	app.use(express.static('./'));
+	app.get('/', function(req, res,next) {
+	    res.sendFile(__dirname + '/html/index.html');
+	});
+
+	const port = options.port || 9191
+	const myAddress = 'frontend'
+	//const amqpHost = config.host || process.env.AMQP_HOST || 'dex-01.lab.uvalight.net'
+	const sockets = []
+
+	async function handler(msg) {
+	    const rk = msg.fields.routingKey
+		const data = msg.content.toString()
+		console.log("message> ", data)
+		sockets.forEach(s => {
+			  if(s.connected){
+				s.emit('update', data) 
+			  } else {
+				console.log('socket not connected')
+			  }
+		})
+	}
+
+	io.on('connection', async function(socket) {
+	    console.log('Client connected...');
+		sockets.push(socket)
+		try {
+			console.log(`${GREEN}--> Submit Transaction: GetAllNets`);
+			const transaction = contract1Org.createTransaction('GetAllNets');
+			const resultBuffer = await transaction.submit();
+			const nets = resultBuffer.toString('utf8');
+			const JSONTokens = JSON.parse(nets);
+			JSONTokens.forEach(n => {
+				console.log("net: ", n);
+			})
+			socket.emit('net', nets);
+			console.log(`${GREEN}<-- Submit GetTokens Result: ${nets}${RESET}`);
+		} catch (createError) {
+			console.log(`${RED}<-- Submit Failed: CreatePlace - ${createError}${RESET}`);
+		}
+		//domains.forEach(d => {
+		//	d.type = "domain"
+		//	d.state = "INIT"
+		//	socket.emit('update', JSON.stringify(d))
+
+		//})
+		//Object.keys(planners).forEach(k => {
+		//	p = planners[k]
+		//	const d = {
+		//		type: 'planner',
+		//		state: 'PLANNER_UPDATE',
+		//		address: k,
+		//		body: p
+		//	}
+		//	socket.emit('update', JSON.stringify(d))
+		//})
+		//Object.keys(policies).forEach(k => {
+		//	p = policies[k]
+		//	const d = {
+		//		type: 'policy',
+		//		state: 'POLICY_UPDATE',
+		//		address: k,
+		//		body: p
+		//	}
+		//	socket.emit('update', JSON.stringify(d))
+		//})
+		
+		socket.on('ready', function(d) {
+			//const topic = ns + '/ui/ready'
+			//console.log("sending ", topic)
+			//client.publish(topic, '{}')
+		})
+
+		socket.on('proxy', function(d) {
+		//	console.log("PROXY: ", d)
+		//	const topic = d.topic
+		//	const b64 = d.base64
+		//	const payload = (b64) ? encode64(JSON.stringify(d.payload)) : JSON.stringify(d.payload)
+		//	console.log("sending proxy: ", d.topic)
+		//	channel.publish("dex01", topic, Buffer.from(payload));
+		//	//client.publish(topic, payload)
+		})
+	})
+
+	server.listen(port);
 }
 main();
+
