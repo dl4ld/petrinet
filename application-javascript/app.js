@@ -258,7 +258,7 @@ async function completeTransition(ctx, netId, transitionId) {
 }
 
 async function createAndMoveToken(ctx, netId, placeId) {
-	const tokenId = 'T' + (Math.floor(Math.random() * 99) + 1);
+	const tokenId = 'TK' + (Math.floor(Math.random() * 99) + 1);
 	//create
 	try {
 		const assetKey = tokenId;
@@ -620,16 +620,46 @@ async function main() {
 	    console.log('Client connected...');
 		sockets.push(socket)
 		try {
+			// Get Nets
 			console.log(`${GREEN}--> Submit Transaction: GetAllNets`);
-			const transaction = contract1Org.createTransaction('GetAllNets');
-			const resultBuffer = await transaction.submit();
+			let transaction = contract1Org.createTransaction('GetAllNets');
+			let resultBuffer = await transaction.submit();
 			const nets = resultBuffer.toString('utf8');
-			const JSONTokens = JSON.parse(nets);
-			JSONTokens.forEach(n => {
-				console.log("net: ", n);
-			})
+			//const JSONTokens = JSON.parse(nets);
+			//JSONTokens.forEach(n => {
+			//	console.log("net: ", n);
+			//})
 			socket.emit('net', nets);
-			console.log(`${GREEN}<-- Submit GetTokens Result: ${nets}${RESET}`);
+			console.log(`${GREEN}<-- Submit GetAllNets Result: ${nets}${RESET}`);
+			
+			// Get Transitions
+			console.log(`${GREEN}--> Submit Transaction: GetAllTransitions`);
+			transaction = contract1Org.createTransaction('GetAllTransitions');
+			resultBuffer = await transaction.submit();
+			const transitions = resultBuffer.toString('utf8');
+			//const JSONTokens = JSON.parse(transitions);
+			socket.emit('transitions', transitions);
+			console.log(`${GREEN}<-- Submit GetAllTransitions Result: ${transitions}${RESET}`);
+			
+			// Get Tokens
+			console.log(`${GREEN}--> Submit Transaction: GetAllTokens`);
+			transaction = contract1Org.createTransaction('GetAllTokens');
+			resultBuffer = await transaction.submit();
+			const tokens = resultBuffer.toString('utf8');
+			//const JSONTokens = JSON.parse(transitions);
+			socket.emit('tokens', tokens);
+			console.log(`${GREEN}<-- Submit GetAllTokens Result: ${tokens}${RESET}`);
+			
+			// Get Places
+			console.log(`${GREEN}--> Submit Transaction: GetAllPlaces`);
+			transaction = contract1Org.createTransaction('GetAllPlaces');
+			resultBuffer = await transaction.submit();
+			const places = resultBuffer.toString('utf8');
+			//const JSONTokens = JSON.parse(transitions);
+			socket.emit('places', places);
+			console.log(`${GREEN}<-- Submit GetAllPlaces Result: ${places}${RESET}`);
+
+
 		} catch (createError) {
 			console.log(`${RED}<-- Submit Failed: CreatePlace - ${createError}${RESET}`);
 		}

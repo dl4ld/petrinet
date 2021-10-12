@@ -1,138 +1,92 @@
 <!DOCTYPE html>
 <html>
-        <title>petrinet</title>
-<meta charset="UTF-8"> 
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="html/styles/style.css">
-<link rel="stylesheet" href="html/styles/w3.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Allerta+Stencil">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jerosoler/Drawflow/dist/drawflow.min.css">
-<script src="https://cdn.jsdelivr.net/gh/jerosoler/Drawflow/dist/drawflow.min.js"></script>
+    <head>
+        <meta charset="utf-8"/>
 
-  <script src="https://cdn.jsdelivr.net/gh/jerosoler/Drawflow/dist/drawflow.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/js/all.min.js" integrity="sha256-KzZiKy0DWYsnwMF+X1DvQngQ2/FxF7MF3Ff72XcpuPs=" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jerosoler/Drawflow@0.0.48/dist/drawflow.min.css">
-  <link rel="stylesheet" type="text/css" href="/html/beautiful.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css" integrity="sha256-h20CPZ0QyXlBuAw7A+KluUYx/3pK+c7lYEpqLTlxjYQ=" crossorigin="anonymous" />
-  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
-  <script src="https://unpkg.com/micromodal/dist/micromodal.min.js"></script>
-<head>
-</head>
+        <title>Petri Nets</title>
 
-<style>
-html, body{
-        height:100%;
-        width:100%;
-}
-</style>
+        <link rel="stylesheet" type="text/css" href="/html/joint.min.css" />
+	<link rel="stylesheet" href="html/styles/w3.css">
 
+    </head>
+    <body>
+	<div class="w3-sidebar w3-bar-block" style="width:15%">
+	  <a href="#" class="w3-bar-item w3-button">Organizations</a>
+	  <a href="#" class="w3-bar-item w3-button">Places</a>
+	  <a href="#" class="w3-bar-item w3-button">Transitions</a>
+	  <a href="#" class="w3-bar-item w3-button">Tokens</a>
+	</div>
+	<div style="margin-left:15%">
+		<div id="paper"></div>
+	</div>
 
-<script src="html/scripts/jquery-3.3.1.min.js"></script>
-<script src="/socket.io/socket.io.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/fake-smile@1.0.1/smil.user.min.js"></script>
+        <script src="/node_modules/jquery/dist/jquery.js"></script>
+        <script src="/node_modules/lodash/lodash.js"></script>
+        <script src="/node_modules/backbone/backbone.js"></script>
 
-<body>
-  <script>
+        <script src="/html/joint.min.js"></script>
+        <script src="/html/pn.js"></script>
+
+	<script> 
+	
+	  const db = {
+		  orgs: {},
+		  nets: {},
+		  places: {},
+		  tokens: {},
+		  transitions: {}
+	  }
+
 	  $.when( $.ready ).then(function() {
-
-		var id = document.getElementById("drawflow");
-                //id.setAttribute("style", "height:" + window.innerHeight + "px;width:" +window.innerWidth/2+"px;")
-                id.setAttribute("style", "height:" + window.innerHeight + "px;width:" +window.innerWidth+"px;")
-		const editor = new Drawflow(id);
-		editor.start();
 
 		// open web socket
                 socket = io()
                 socket.emit('ready', '');
 
-                socket.on('net', function(data) {
-                        console.log("nets> ", data);
-                        try{
-                                nets = JSON.parse(data);
-				nets.forEach(function(n)  {
-					const draw = {
-						drawflow: {
-							Home: {
-								data: {}
-							}
-						}
-					}
-					const d = draw.drawflow.Home.data;
-					n.Record.arcs.forEach(function(arc, c) {
-						const src = arc.src;
-						const dst = arc.dst;
-						const i = c*2;
-						if(d[src.id]) {
-							d[src.id].outputs = {
-								output_1: {
-									connections: [ {node: dst.id,output: "input_1"} ]
-								}
-							}
-						} else {
-							d[src.id] = {
-								id: src.id,
-								pos_x:(i*200),
-								pos_y:0,
-								name: src.id,
-								data: src,
-								class: src.type,
-								html: `<div>${src.id}</div>`,
-								typenode:false,
-								inputs: {},
-								outputs: {
-									output_1: {
-										connections: [ {node: dst.id,output: "input_1"} ]
-									}
-								}
-
-							}
-						}
-						if(d[dst.id]) {
-							d[dst.id].inputs = { 
-								input_1: {
-									connections: [ { node: src.id, input: "output_1" }]
-								}
-							}
-						} else {
-							d[dst.id] = {
-								id: dst.id,
-								pos_x:((i+1)*200),
-								pos_y:(200),
-								name: dst.id,
-								data: dst,
-								class: dst.type,
-								html: `<div>${dst.id}</div>`,
-								typenode:false,
-								inputs: {
-									input_1: {
-										connections: [ { node: src.id, input: "output_1" }]
-									}
-								},
-								outputs: {
-								}
-							}
-						}
-					})
-				console.log("importing: ", draw)
-				editor.import(draw);
+		socket.on('tokens', function(data) {
+                	console.log("tokens> ", data);
+			const tokens = JSON.parse(data);
+			tokens.map(function(t){ return t.Record;})
+				.forEach(function(t){
+					db.tokens[t.id] = t;
 				})
 
+		})
+		socket.on('places', function(data) {
+                	console.log("places> ", data);
+			const places = JSON.parse(data);
+			places.map(function(p) {
+				return p.Record;
+				})
+				.forEach(function(p){
+					db.places[p.id] = p;
+				})
 
-                        } catch(err) {
-                                console.log(err)
-                        }
+		})
+		socket.on('transitions', function(data) {
+                	console.log("transitions> ", data);
+			const transitions = JSON.parse(data);
+			transitions.map(function(t) { return t.Record; })
+				.forEach(function(t) {
+					db.transitions[t.id] = t;
+				})
+		})
 
-                });
+                socket.on('net', function(data) {
+                        console.log("nets> ", data);
+			const nets = JSON.parse(data);
+			nets.map(function(n) { return n.Record; })
+				.forEach(function(n) {
+					db.nets[n.id] = n;
+				})
+                })
+		setTimeout(function() { console.log(db)}, 5000)
 
 	  });
 
-  </script>
-    
-
-  <div id="drawflow"></div>
-  <div id="editor-pane" class="w3-border w3-display-topright"></div>
-  <div id="aux-pane" class="w3-border w3-sand w3-display-bottomright"></div>
-  <div id="notification-pane" class="w3-container w3-display-topmiddle w3-opacity"></div>
+	</script>
 
 </body>
 </html>
