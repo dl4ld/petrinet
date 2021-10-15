@@ -11,6 +11,7 @@ const jwt = require('jsonwebtoken');
 const https = require('https');
 const url = require('url');
 const fs = require('fs');
+const x509 = require('x509');
 const async = require('async');
 const commandLineArgs = require('command-line-args');
 const { buildCAClient, registerAndEnrollUser, enrollAdmin } = require('../../test-application/javascript/CAUtil.js');
@@ -181,7 +182,7 @@ async function initGatewayForOrg(useCommitEvents) {
 		}
 
 
-		return gatewayOrg;
+		return gatewayOrg;;
 	} catch (error) {
 		console.error(`Error in connecting to gateway for Org: ${error}`);
 		process.exit(1);
@@ -367,6 +368,7 @@ async function main() {
 	let network1Org;
 	let contract1Org;
 	let listener;
+	let context;
 	try {
 		// Load transition handlers
 		loadModules(pluginDir);
@@ -378,13 +380,15 @@ async function main() {
 			network1Org = await gateway1Org.getNetwork(channelName);
 			contract1Org = network1Org.getContract(chaincodeName);
 			let listener;
-			const context = {
+			context = {
+
 				gateway: gateway1Org,
 				network: network1Org,
 				contract: contract1Org,
 				userId: userId,
 				orgMSP: orgMSP
 			}
+
 
 			
 			// Create place assets
@@ -620,6 +624,11 @@ async function main() {
 	    console.log('Client connected...');
 		sockets.push(socket)
 		try {
+			// Send identity
+			const str = context.gateway.identity.credentials.certificate;
+			const cert = x509.parseCert(context.gateway.identity.credentials.certificate);
+			socket.emit("identity", JSON.stringify(cert));
+
 			// Get Nets
 			console.log(`${GREEN}--> Submit Transaction: GetAllNets`);
 			let transaction = contract1Org.createTransaction('GetAllNets');
