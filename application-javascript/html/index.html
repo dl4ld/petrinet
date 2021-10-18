@@ -34,7 +34,7 @@
 
 	</div>
 	<div style="margin-left:15%">
-		<div id="paper"></div>
+		<div id="paper" class="w3-border"></div>
 	</div>
 
 	<script src="/socket.io/socket.io.js"></script>
@@ -48,6 +48,276 @@
         <script src="/html/joint.min.js"></script>
 	<!--<script src="/html/pn.js"></script>-->
 
+
+	<script>
+		function myAccFunc(el) {
+		  var x = document.getElementById(el);
+		  if (x.className.indexOf("w3-show") == -1) {
+		    x.className += " w3-show";
+		    x.previousElementSibling.className += " w3-teal";
+		  } else {
+		    x.className = x.className.replace(" w3-show", "");
+		    x.previousElementSibling.className =
+		    x.previousElementSibling.className.replace(" w3-teal", "");
+		  }
+		}
+		
+		function addItemToAcc(el, item, onclick) {
+		  var x = document.getElementById(el);
+		  var i = document.createElement("A");
+		  i.className = "w3-bar-item w3-button";
+		  i.innerHTML = item;
+		  i.setAttribute("href", "#");
+		  if(!onclick) {
+		  	i.setAttribute("onclick", `showModal('${item}'); return true;`);
+		  } else {
+		  	i.setAttribute("onclick", onclick +" return true;");
+		  }
+	          x.appendChild(i);
+		  
+		}
+
+		function renderJSON(obj) {
+		    'use strict';
+		    var keys = [],
+			retValue = "";
+		    for (var key in obj) {
+			if (typeof obj[key] === 'object') {
+			    retValue += "<div class='tree'>" + key;
+			    retValue += renderJSON(obj[key]);
+			    retValue += "</div>";
+			} else {
+			    retValue += "<div class='tree'>" + key + " = " + obj[key] + "</div>";
+			}
+
+			keys.push(key);
+		    }
+		    return retValue;
+		}
+
+		function createModal(id, title, data) {
+			const wrapper = document.createElement("DIV");
+			wrapper.className += " w3-modal ";
+			wrapper.id = id;
+			const html = `<div class="w3-modal-content"> <header class="w3-container w3-teal"> <span onclick="document.getElementById('${id}').style.display='none'" class="w3-button w3-display-topright">&times;</span> <h3>${title}</h3> </header> <div class="w3-container"${renderJSON(data)}</div></div>`
+			wrapper.innerHTML = html;
+			document.body.appendChild(wrapper);
+		}
+
+		function showModal(id) {
+			const modal = document.getElementById(id);
+			if(!modal) {
+				return;
+			}
+			if(modal) {
+				modal.style.display='block';
+			}
+		}
+
+		function drawNet(elId, netId) {
+			var net = db.nets[netId];
+			var graph = new joint.dia.Graph();
+			var el = document.getElementById(elId);
+			paperWrapper = el.getBoundingClientRect();
+			var width = $(window).width() - paperWrapper.x-10;
+			var height = $(window).height() - paperWrapper.y - 10;
+			var paper = new joint.dia.Paper({
+			    el: document.getElementById(elId),
+			    width: width,
+			    height: height,
+			    gridSize: 10,
+			    defaultAnchor: { name: 'perpendicular' },
+			    defaultConnectionPoint: { name: 'boundary' },
+			    model: graph
+			});
+
+			paper.on('cell:pointerclick', function (cellView) {
+				console.log(cellView);
+				var type = cellView.model.attributes.type;
+				if(type == "pn.Link") {
+					return;
+				}
+				var id = cellView.model.attributes.attrs['.label']['text']
+				console.log("ID: ", id)
+				showModal(id)
+			});
+
+			var pn = joint.shapes.pn;
+
+			function link(a, b) {
+
+			    return new pn.Link({
+				source: { id: a.id, selector: '.root' },
+				target: { id: b.id, selector: '.root' },
+				attrs: {
+				    '.connection': {
+					'fill': 'none',
+					'stroke-linejoin': 'round',
+					'stroke-width': '2',
+					'stroke': '#4b4a67'
+				    }
+				}
+			    });
+			}
+			
+			const cells = [];
+			const nodes = {};
+			
+			function createNode(id, type) {
+				if(nodes[id]) {
+					return nodes[id]
+				}
+				let node = null;
+				if(type == 'place') {
+					node = new pn.Place({
+					    attrs: {
+						'.label': {
+						    'text': id,
+						    'fill': '#7c68fc' },
+						'.root': {
+						    'stroke': '#9586fd',
+						    'stroke-width': 3
+						},
+						'.tokens > circle': {
+						    'fill': '#7a7e9b'
+						}
+					    },
+					    tokens: 0
+					});
+				}
+				if(type == 'transition') {
+					node = new pn.Transition({
+					    attrs: {
+						'.label': {
+						    'text': id,
+						    'fill': '#fe854f'
+						},
+						'.root': {
+						    'fill': '#9586fd',
+						    'stroke': '#9586fd'
+						}
+					    }
+					});
+				}
+				nodes[id] = node;
+
+
+				return node;
+			}
+
+			net.arcs.forEach(function(a) {
+				const src = a.src;
+				const dst = a.dst;
+				const sNode = createNode(src.id, src.type);
+				const dNode = createNode(dst.id, dst.type);
+				graph.addCell([sNode, dNode]);
+				graph.addCell([link(sNode,dNode)]);
+			})
+
+			// Auto layout nodes
+			joint.layout.DirectedGraph.layout(graph, {
+			    dagre: dagre,
+			    graphlib: graphlib,
+			    setLinkVertices: false,
+			    rankDir: "LR",
+			    rankSep: 150,
+			    marginX: 100,
+			    marginY: 200,
+			    nodeSep: 80,
+			    edgeSep: 50
+			});
+
+
+		}
+
+	</script>
+
+
+	<script> 
+	
+	  const db = {
+		  myInfo: {},
+		  orgs: {},
+		  nets: {},
+		  places: {},
+		  tokens: {},
+		  transitions: {}
+	  }
+
+	  function isNew(type, id) {
+		  return (!db[type][id]);
+	  }
+
+	  $.when( $.ready ).then(function() {
+
+		// open web socket
+                socket = io()
+                socket.emit('ready', '');
+		socket.on('identity', function(data) {
+			console.log("identity> ", data)
+			createModal('x509', 'My Identity', JSON.parse(data));
+
+		})
+
+		socket.on('tokens', function(data) {
+                	console.log("tokens> ", data);
+			const tokens = JSON.parse(data);
+			tokens.map(function(t){ return t.Record;})
+				.forEach(function(t){
+					if(isNew('tokens', t.id)) {
+						db.tokens[t.id] = t;
+						addItemToAcc('tokensAcc', t.id);
+						createModal(t.id, `Token: ${t.id}`, t);
+					}
+				})
+
+		})
+		socket.on('places', function(data) {
+                	console.log("places> ", data);
+			const places = JSON.parse(data);
+			places.map(function(p) {
+				return p.Record;
+				})
+				.forEach(function(p){
+					if(isNew("places", p.id)) {
+						db.places[p.id] = p;
+				        	addItemToAcc('placesAcc', p.id);
+						createModal(p.id, `Place: ${p.id}`, p);
+					}
+				})
+
+		})
+		socket.on('transitions', function(data) {
+                	console.log("transitions> ", data);
+			const transitions = JSON.parse(data);
+			transitions.map(function(t) { return t.Record; })
+				.forEach(function(t) {
+					if(isNew("transitions", t.id)) {
+						db.transitions[t.id] = t;
+						addItemToAcc('transitionsAcc', t.id);
+						createModal(t.id, `Transition: ${t.id}`, t);
+					}
+				})
+		})
+
+                socket.on('net', function(data) {
+                        console.log("nets> ", data);
+			const nets = JSON.parse(data);
+			nets.map(function(n) { return n.Record; })
+				.forEach(function(n) {
+					if(isNew("nets", n.id)) {
+						db.nets[n.id] = n;
+						addItemToAcc('netsAcc', n.id, `drawNet('paper', '${n.id}');`);
+						//createModal(n.id, `Net: ${n.id}`, n);
+						//drawNet('paper', n)
+					}
+				})
+                })
+		setTimeout(function() { console.log(db)}, 5000)
+
+	  });
+
+	</script>
 	<script>
 /*
 var graph = new joint.dia.Graph();
@@ -251,244 +521,6 @@ function stopSimulation(simulationId) {
     clearInterval(simulationId);
 }
 */
-
-	</script>
-
-	<script>
-		function myAccFunc(el) {
-		  var x = document.getElementById(el);
-		  if (x.className.indexOf("w3-show") == -1) {
-		    x.className += " w3-show";
-		    x.previousElementSibling.className += " w3-teal";
-		  } else {
-		    x.className = x.className.replace(" w3-show", "");
-		    x.previousElementSibling.className =
-		    x.previousElementSibling.className.replace(" w3-teal", "");
-		  }
-		}
-		
-		function addItemToAcc(el, item, onclick) {
-		  var x = document.getElementById(el);
-		  var i = document.createElement("A");
-		  i.className = "w3-bar-item w3-button";
-		  i.innerHTML = item;
-		  i.setAttribute("href", "#");
-		  if(!onclick) {
-		  	i.setAttribute("onclick", `showModal('${item}'); return true;`);
-		  } else {
-		  	i.setAttribute("onclick", onclick +" return true;");
-		  }
-	          x.appendChild(i);
-		  
-		}
-
-		function renderJSON(obj) {
-		    'use strict';
-		    var keys = [],
-			retValue = "";
-		    for (var key in obj) {
-			if (typeof obj[key] === 'object') {
-			    retValue += "<div class='tree'>" + key;
-			    retValue += renderJSON(obj[key]);
-			    retValue += "</div>";
-			} else {
-			    retValue += "<div class='tree'>" + key + " = " + obj[key] + "</div>";
-			}
-
-			keys.push(key);
-		    }
-		    return retValue;
-		}
-
-		function createModal(id, title, data) {
-			const wrapper = document.createElement("DIV");
-			wrapper.className += " w3-modal ";
-			wrapper.id = id;
-			const html = `<div class="w3-modal-content"> <header class="w3-container w3-teal"> <span onclick="document.getElementById('${id}').style.display='none'" class="w3-button w3-display-topright">&times;</span> <h3>${title}</h3> </header> <div class="w3-container"${renderJSON(data)}</div></div>`
-			wrapper.innerHTML = html;
-			document.body.appendChild(wrapper);
-		}
-
-		function showModal(id) {
-			const modal = document.getElementById(id);
-			if(modal) {
-				modal.style.display='block';
-			}
-		}
-
-
-		function drawNet(elId, netId) {
-			var net = db.nets[netId];
-			var graph = new joint.dia.Graph();
-			var paper = new joint.dia.Paper({
-			    el: document.getElementById(elId),
-			    width: 1000,
-			    height: 650,
-			    gridSize: 10,
-			    defaultAnchor: { name: 'perpendicular' },
-			    defaultConnectionPoint: { name: 'boundary' },
-			    model: graph
-			});
-
-			var pn = joint.shapes.pn;
-
-			function link(a, b) {
-
-			    return new pn.Link({
-				source: { id: a.id, selector: '.root' },
-				target: { id: b.id, selector: '.root' },
-				attrs: {
-				    '.connection': {
-					'fill': 'none',
-					'stroke-linejoin': 'round',
-					'stroke-width': '2',
-					'stroke': '#4b4a67'
-				    }
-				}
-			    });
-			}
-
-			const cells = [];
-
-			net.arcs.forEach(function(a) {
-				const src = a.src;
-				const dst = a.dst;
-				if(src.type == 'place') {
-					    //position: { x: 50, y: 160 },
-					const sNode = new pn.Place({
-					    attrs: {
-						'.label': {
-						    'text': src.id,
-						    'fill': '#7c68fc' },
-						'.root': {
-						    'stroke': '#9586fd',
-						    'stroke-width': 3
-						},
-						'.tokens > circle': {
-						    'fill': '#7a7e9b'
-						}
-					    },
-					    tokens: 0
-					});
-					    //position: { x: 140, y: 50 },
-					const dNode = new pn.Transition({
-					    attrs: {
-						'.label': {
-						    'text': dst.id,
-						    'fill': '#fe854f'
-						},
-						'.root': {
-						    'fill': '#9586fd',
-						    'stroke': '#9586fd'
-						}
-					    }
-					});
-					graph.addCell([sNode, dNode]);
-					graph.addCell([link(sNode,dNode)]);
-				} 
-			})
-			// Auto layout nodes
-			joint.layout.DirectedGraph.layout(graph, {
-			    dagre: dagre,
-			    graphlib: graphlib,
-			    setLinkVertices: false,
-			    rankDir: "LR",
-			    rankSep: 150,
-			    marginX: 100,
-			    marginY: 200,
-			    nodeSep: 80,
-			    edgeSep: 50
-			});
-
-
-		}
-
-	</script>
-
-
-	<script> 
-	
-	  const db = {
-		  myInfo: {},
-		  orgs: {},
-		  nets: {},
-		  places: {},
-		  tokens: {},
-		  transitions: {}
-	  }
-
-	  function isNew(type, id) {
-		  return (!db[type][id]);
-	  }
-
-	  $.when( $.ready ).then(function() {
-
-		// open web socket
-                socket = io()
-                socket.emit('ready', '');
-		socket.on('identity', function(data) {
-			console.log("identity> ", data)
-			createModal('x509', 'My Identity', JSON.parse(data));
-
-		})
-
-		socket.on('tokens', function(data) {
-                	console.log("tokens> ", data);
-			const tokens = JSON.parse(data);
-			tokens.map(function(t){ return t.Record;})
-				.forEach(function(t){
-					if(isNew('tokens', t.id)) {
-						db.tokens[t.id] = t;
-						addItemToAcc('tokensAcc', t.id);
-						createModal(t.id, `Token: ${t.id}`, t);
-					}
-				})
-
-		})
-		socket.on('places', function(data) {
-                	console.log("places> ", data);
-			const places = JSON.parse(data);
-			places.map(function(p) {
-				return p.Record;
-				})
-				.forEach(function(p){
-					if(isNew("places", p.id)) {
-						db.places[p.id] = p;
-				        	addItemToAcc('placesAcc', p.id);
-						createModal(p.id, `Place: ${p.id}`, p);
-					}
-				})
-
-		})
-		socket.on('transitions', function(data) {
-                	console.log("transitions> ", data);
-			const transitions = JSON.parse(data);
-			transitions.map(function(t) { return t.Record; })
-				.forEach(function(t) {
-					if(isNew("transitions", t.id)) {
-						db.transitions[t.id] = t;
-						addItemToAcc('transitionsAcc', t.id);
-						createModal(t.id, `Transition: ${t.id}`, t);
-					}
-				})
-		})
-
-                socket.on('net', function(data) {
-                        console.log("nets> ", data);
-			const nets = JSON.parse(data);
-			nets.map(function(n) { return n.Record; })
-				.forEach(function(n) {
-					if(isNew("nets", n.id)) {
-						db.nets[n.id] = n;
-						addItemToAcc('netsAcc', n.id, `drawNet('paper', '${n.id}');`);
-						//createModal(n.id, `Net: ${n.id}`, n);
-						//drawNet('paper', n)
-					}
-				})
-                })
-		setTimeout(function() { console.log(db)}, 5000)
-
-	  });
 
 	</script>
 
