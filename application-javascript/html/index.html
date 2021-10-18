@@ -42,6 +42,8 @@
         <script src="/node_modules/jquery/dist/jquery.js"></script>
         <script src="/node_modules/lodash/lodash.js"></script>
         <script src="/node_modules/backbone/backbone.js"></script>
+        <script src="/html/graphlib.min.js"></script>
+        <script src="/html/dagre.min.js"></script>
 
         <script src="/html/joint.min.js"></script>
 	<!--<script src="/html/pn.js"></script>-->
@@ -352,8 +354,8 @@ function stopSimulation(simulationId) {
 				const src = a.src;
 				const dst = a.dst;
 				if(src.type == 'place') {
+					    //position: { x: 50, y: 160 },
 					const sNode = new pn.Place({
-					    position: { x: 50, y: 160 },
 					    attrs: {
 						'.label': {
 						    'text': src.id,
@@ -368,8 +370,8 @@ function stopSimulation(simulationId) {
 					    },
 					    tokens: 0
 					});
+					    //position: { x: 140, y: 50 },
 					const dNode = new pn.Transition({
-					    position: { x: 140, y: 50 },
 					    attrs: {
 						'.label': {
 						    'text': dst.id,
@@ -385,6 +387,18 @@ function stopSimulation(simulationId) {
 					graph.addCell([link(sNode,dNode)]);
 				} 
 			})
+			// Auto layout nodes
+			joint.layout.DirectedGraph.layout(graph, {
+			    dagre: dagre,
+			    graphlib: graphlib,
+			    setLinkVertices: false,
+			    rankDir: "LR",
+			    rankSep: 150,
+			    marginX: 100,
+			    marginY: 200,
+			    nodeSep: 80,
+			    edgeSep: 50
+			});
 
 
 		}
