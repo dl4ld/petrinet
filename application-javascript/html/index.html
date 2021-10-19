@@ -57,6 +57,12 @@
 
 
 	<script>
+		var paperWidth = null;
+		var paperHeight = null;
+		var currentPaper = null;
+		var currentGraph = null;
+		var graphs = {};
+
 		function myAccFunc(el) {
 		  var x = document.getElementById(el);
 		  if (x.className.indexOf("w3-show") == -1) {
@@ -68,8 +74,9 @@
 		    x.previousElementSibling.className.replace(" w3-teal", "");
 		  }
 		}
-                function drag(ev, id) {
-			ev.dataTransfer.setData("ref", id);
+                function drag(ev, id, type) {
+			ev.dataTransfer.setData("nodeId", id);
+			ev.dataTransfer.setData("nodeType", type);
 		}
 
 		function allowDrop(ev) {
@@ -77,17 +84,22 @@
 		}
 
 		function drop(ev) {
-			console.log("Drop: ", ev.dataTransfer.getData("ref"));
+			const id = ev.dataTransfer.getData("nodeId");
+			const type = ev.dataTransfer.getData("nodeType");
+			console.log(`Node type ${type} name ${id} is dragged.`);
+			console.log(ev)
+			addNode(currentGraph, id, type, ev.layerX, ev.layerY);
+
 		}
 		
-		function addItemToAcc(el, item, onclick) {
+		function addItemToAcc(el, item, type, onclick) {
 		  var x = document.getElementById(el);
 		  var i = document.createElement("A");
 		  i.className = "w3-bar-item w3-button";
 		  i.innerHTML = item;
 		  i.setAttribute("href", "#");
 		  i.setAttribute("draggable", "true");
-			i.setAttribute("ondragstart", `drag(event, '${item}')`)
+			i.setAttribute("ondragstart", `drag(event, '${item}', '${type}')`)
 		  if(!onclick) {
 		  	i.setAttribute("onclick", `showModal('${item}'); return true;`);
 		  } else {
@@ -141,6 +153,7 @@
 			   x[i].style.display = "none";
 			}
 			document.getElementById(id).style.display = "block";
+			currentPaper = id;
 		}
 
 		function displayNet(netId) {
@@ -151,16 +164,19 @@
 
 			createNet(netId);
 
-			drawNet("paper-" + netId, netId);
+			var g = drawNet("paper-" + netId, netId);
+			graphs[netId] = g;
+			currentGraph = g;
 			openTab("paper-" + netId)
 		}
 
-		var paperWidth = null;
-		var paperHeight = null;
+
  		function createNewNet(id) {
 			const netId = (!id) ? "N" + Math.floor(Math.random() * 100) : id;
 			createNet(netId);
-			drawNet("paper-" + netId, netId);
+			var g = drawNet("paper-" + netId, netId);
+			graphs[netId] = g;
+			currentGraph = g;
 			openTab("paper-" + netId);
 		}
 
@@ -183,6 +199,46 @@
 			document.getElementById("main-panel").appendChild(paper);
 			tabs.appendChild(tab);
 			return paper;
+		}
+
+		function addNode(graph, id, type, x, y) {
+			let node = null;
+			var pn = joint.shapes.pn;
+			if(type == 'place') {
+				node = new pn.Place({
+    				    position: { x: x, y: y },
+				    attrs: {
+					'.label': {
+					    'text': id,
+					    'fill': '#7c68fc' },
+					'.root': {
+					    'stroke': '#9586fd',
+					    'stroke-width': 3
+					},
+					'.tokens > circle': {
+					    'fill': '#7a7e9b'
+					}
+				    },
+				    tokens: 0
+				});
+			}
+			if(type == 'transition') {
+				node = new pn.Transition({
+    				    position: { x: x, y: y },
+				    attrs: {
+					'.label': {
+					    'text': id,
+					    'fill': '#fe854f'
+					},
+					'.root': {
+					    'fill': '#9586fd',
+					    'stroke': '#9586fd'
+					}
+				    }
+				});
+			}
+			graph.addCell([node]);
+			return node;
 		}
 
 		function drawNet(elId, netId) {
@@ -273,7 +329,6 @@
 				}
 				nodes[id] = node;
 
-
 				return node;
 			}
 
@@ -281,8 +336,8 @@
 				net.arcs.forEach(function(a) {
 					const src = a.src;
 					const dst = a.dst;
-					const sNode = createNode(src.id, src.type);
-					const dNode = createNode(dst.id, dst.type);
+					const sNode = createNode(src.id, src.type)
+					const dNode = createNode(dst.id, dst.type)
 					graph.addCell([sNode, dNode]);
 					graph.addCell([link(sNode,dNode)]);
 				})
@@ -301,7 +356,7 @@
 				});
 			}
 
-
+			return graph;
 		}
 
 	</script>
@@ -340,7 +395,7 @@
 				.forEach(function(t){
 					if(isNew('tokens', t.id)) {
 						db.tokens[t.id] = t;
-						addItemToAcc('tokensAcc', t.id);
+						addItemToAcc('tokensAcc', t.id, 'token');
 						createModal(t.id, `Token: ${t.id}`, t);
 					}
 				})
@@ -355,7 +410,7 @@
 				.forEach(function(p){
 					if(isNew("places", p.id)) {
 						db.places[p.id] = p;
-				        	addItemToAcc('placesAcc', p.id);
+				        	addItemToAcc('placesAcc', p.id, 'place');
 						createModal(p.id, `Place: ${p.id}`, p);
 					}
 				})
@@ -368,7 +423,7 @@
 				.forEach(function(t) {
 					if(isNew("transitions", t.id)) {
 						db.transitions[t.id] = t;
-						addItemToAcc('transitionsAcc', t.id);
+						addItemToAcc('transitionsAcc', t.id, 'transition');
 						createModal(t.id, `Transition: ${t.id}`, t);
 					}
 				})
@@ -381,7 +436,7 @@
 				.forEach(function(n) {
 					if(isNew("nets", n.id)) {
 						db.nets[n.id] = n;
-						addItemToAcc('netsAcc', n.id, `displayNet('${n.id}');`);
+						addItemToAcc('netsAcc', n.id, 'net', `displayNet('${n.id}');`);
 						//createModal(n.id, `Net: ${n.id}`, n);
 						//drawNet('paper', n)
 					}
