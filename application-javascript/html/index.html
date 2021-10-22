@@ -115,8 +115,10 @@
 				console.log(ev);
 				const targetId = ev.originalTarget.id;
 				const p = currentGraph.getCell(targetId);
-                    		p.set('tokens', p.get('tokens') + 1);
-				console.log(`Cell: ${targetId}: ${JSON.stringify(p)}`)
+				if(p && (p.attributes.type == 'pn.Place')) {
+					p.set('tokens', p.get('tokens') + 1);
+					console.log(`Cell: ${targetId}: ${JSON.stringify(p)}`)
+				}
 
 			}
 
