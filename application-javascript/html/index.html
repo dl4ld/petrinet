@@ -61,6 +61,7 @@
 		var paperHeight = null;
 		var currentPaper = null;
 		var currentGraph = null;
+		var editMode = false;
 		var graphs = {};
 
 		function myAccFunc(el) {
@@ -83,13 +84,88 @@
 			ev.preventDefault();
 		}
 
+		function find(o, s, p) {
+			var path = '/' + p
+			function isObject(obj) {
+    				return Object.prototype.toString.call(obj) === '[object Object]';
+			}
+
+			Object.keys(o).forEach(function(k) {
+				const v = o[k];
+				if(isObject(v)) {
+					find(v,s,k)
+				} else {
+					if(v == s) {
+						console.log(path)
+						return path
+					}
+				}
+			})
+		}
+
 		function drop(ev) {
 			const id = ev.dataTransfer.getData("nodeId");
 			const type = ev.dataTransfer.getData("nodeType");
-			console.log(`Node type ${type} name ${id} is dragged.`);
-			console.log(ev)
-			addNode(currentGraph, id, type, ev.layerX, ev.layerY);
+			if(type == 'net') {
+				console.log(`Drop net: ${id}`);
+				addNet(currentGraph, id, ev.layerX, ev.layerY);
+			}
 
+			if(type == 'token'){
+				console.log(ev);
+				const targetId = ev.originalTarget.id;
+				const p = currentGraph.getCell(targetId);
+                    		p.set('tokens', p.get('tokens') + 1);
+				console.log(`Cell: ${targetId}: ${JSON.stringify(p)}`)
+
+			}
+
+			if(type == 'place') {
+				addNode(currentGraph, id, type, ev.layerX, ev.layerY);
+			}
+
+			if(type == 'transition') {
+				addNode(currentGraph, id, type, ev.layerX, ev.layerY);
+			}
+
+		}
+
+		function addNet(graph, id, x, y) {
+			const net = db.nets[id];
+			const netGraph = graphs[id];
+			console.log(netGraph);
+			const cells = netGraph.getCells();
+			let smallX = 100000;
+			let smallY = 100000;
+			cells.filter(function(c) {
+					return (c.attributes.type != "pn.Link") 
+				})
+				.map(function(c) {
+					const ox = c.attributes.position.x;
+					const oy = c.attributes.position.y;
+					if(ox < smallX) {
+						smallX = ox;
+					}
+					if(oy < smallY) {
+						smallY = oy;
+					}
+					return c;
+				})
+				.forEach(function(c) {
+					const ox = c.attributes.position.x;
+					const oy = c.attributes.position.y;
+					const offsetX = x - smallX;
+					const offsetY = y - smallY;
+					c.attributes.position.x += offsetX;
+					c.attributes.position.y += offsetY;
+					if(editMode) {
+						c.attr('circle/magnet', true).attr('text/pointer-events', 'none');
+						c.attr('rect/magnet', true).attr('text/pointer-events', 'none');
+					}
+				});
+			
+			graph.addCell(cells);
+			//graph.addLinks(links);
 		}
 		
 		function addItemToAcc(el, item, type, onclick) {
@@ -206,6 +282,7 @@
 			var pn = joint.shapes.pn;
 			if(type == 'place') {
 				node = new pn.Place({
+				    id: id,
     				    position: { x: x, y: y },
 				    attrs: {
 					'.label': {
@@ -213,7 +290,8 @@
 					    'fill': '#7c68fc' },
 					'.root': {
 					    'stroke': '#9586fd',
-					    'stroke-width': 3
+					    'stroke-width': 3,
+					    'id': id
 					},
 					'.tokens > circle': {
 					    'fill': '#7a7e9b'
@@ -221,6 +299,9 @@
 				    },
 				    tokens: 0
 				});
+				if(editMode) {
+					node.attr('circle/magnet', true).attr('text/pointer-events', 'none');
+				}
 			}
 			if(type == 'transition') {
 				node = new pn.Transition({
@@ -236,7 +317,11 @@
 					}
 				    }
 				});
+				if(editMode) {
+					node.attr('rect/magnet', true).attr('text/pointer-events', 'none');
+				}
 			}
+			console.log(node)
 			graph.addCell([node]);
 			return node;
 		}
@@ -254,6 +339,7 @@
 			    width: paperWidth,
 			    height: paperHeight,
 			    gridSize: 10,
+			    drawGrid: true,
 			    defaultAnchor: { name: 'perpendicular' },
 			    defaultConnectionPoint: { name: 'boundary' },
 			    model: graph
@@ -269,6 +355,68 @@
 				console.log("ID: ", id)
 				showModal(id)
 			});
+
+			// ---------------------------- test --------------------- //
+
+			// Select source.
+			var selected;
+			paper.on('cell:pointerdown', function(cellView) {
+
+			    if (editMode || cellView.model.isLink()) return;
+			    //if (selected) selected.attr(attrs.elementDefault);
+			    //(selected = cellView.model).attr(attrs.elementSelected);
+			    //hidePath();
+			});
+
+			// Hover an element to select a target.
+			paper.on('cell:mouseover', function(cellView, evt) {
+
+			    if (editMode || cellView.model.isLink() || cellView.model === selected) return;
+			    //if (selected) {
+			//	var path = graph.shortestPath(selected, cellView.model, { directed: directed });
+			//	showPath(path);
+			//	cellView.model.attr(attrs.elementHighlighted);
+			  //  }
+			});
+
+			// Deselect target.
+			paper.on('cell:mouseout', function(cellView, evt) {
+
+			    if (editMode || cellView.model.isLink() || cellView.model === selected) return;
+			    //cellView.model.attr(attrs.elementDefault);
+			    //hidePath();
+			});
+
+			var pathLinks = [];
+
+			function hidePath() {
+
+			    $('#path').text('');
+			    _.each(pathLinks, function(link) {
+				link.attr(attrs.linkDefault);
+				link.set('labels', []);
+			    });
+			}
+
+
+			function showPath(path) {
+
+			    $('#path').text(path.join(' -> '));
+			    for (var i = 0; i < path.length; i++) {
+				var curr = path[i];
+				var next = path[i + 1];
+				if (next) {
+				    var link = graph.getCell([curr, next].sort().join());
+				    link.label(0, { position: .5, attrs: {
+					text: { text: ' ' + (i + 1) + ' ', 'font-size': 10, fill: 'white' },
+					rect: { rx: 8, ry: 8, fill: 'black', stroke: 'black', 'stroke-width': 5 }
+				    }});
+				    pathLinks.push(link.attr(attrs.linkHighlighted));
+				}
+			    }
+			}
+			
+			// ------------------------- end test --------------------- //
 
 			var pn = joint.shapes.pn;
 
