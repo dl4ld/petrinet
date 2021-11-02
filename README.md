@@ -15,6 +15,7 @@ Run the 2 domain applications in different terminals
 
 ```
 cd [PETRINET-REPO-FOLDER]/application-javascript/
+npm install
 ./run_org2.sh petrinet01
 ./run_org1.sh petrinet01
 ```
