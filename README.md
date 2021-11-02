@@ -14,7 +14,7 @@ cd [TEST-NETWORK FOLDER]
 Run the 2 domain applications in different terminals
 
 ```
-cd [PETRINET-REPO-FOLDER]
+cd [PETRINET-REPO-FOLDER]/application-javascript/
 ./run_org2.sh petrinet01
 ./run_org1.sh petrinet02
 ```
