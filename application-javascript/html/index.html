@@ -8,6 +8,69 @@
         <link rel="stylesheet" type="text/css" href="/html/joint.min.css" />
 	<link rel="stylesheet" href="html/styles/w3.css">
 
+	<style>
+		.switch {
+		  position: relative;
+		  display: inline-block;
+		  width: 60px;
+		  height: 34px;
+		}
+
+		.switch input {
+		  opacity: 0;
+		  width: 0;
+		  height: 0;
+		}
+
+		.slider {
+		  position: absolute;
+		  cursor: pointer;
+		  top: 0;
+		  left: 0;
+		  right: 0;
+		  bottom: 0;
+		  background-color: #ccc;
+		  -webkit-transition: .4s;
+		  transition: .4s;
+		}
+
+		.slider:before {
+		  position: absolute;
+		  content: "";
+		  height: 26px;
+		  width: 26px;
+		  left: 4px;
+		  bottom: 4px;
+		  background-color: white;
+		  -webkit-transition: .4s;
+		  transition: .4s;
+		}
+
+		input:checked + .slider {
+		  background-color: #2196F3;
+		}
+
+		input:focus + .slider {
+		  box-shadow: 0 0 1px #2196F3;
+		}
+
+		input:checked + .slider:before {
+		  -webkit-transform: translateX(26px);
+		  -ms-transform: translateX(26px);
+		  transform: translateX(26px);
+		}
+
+		/* Rounded sliders */
+		.slider.round {
+		  border-radius: 34px;
+		}
+
+		.slider.round:before {
+		  border-radius: 50%;
+		}
+		</style>
+
+
     </head>
     <body>
 	 <div class="w3-container w3-teal">
@@ -274,17 +337,53 @@
 			paper.setAttribute("ondragover", "allowDrop(event)");
 			paper.id = "paper-" + netId;
 
+			const rightSideBar = createSideBar();
+
 			document.getElementById("main-panel").appendChild(paper);
+			document.getElementById("main-panel").appendChild(rightSideBar);
 			tabs.appendChild(tab);
 			return paper;
+		}
+
+		function createSideBar() {
+			const el = document.createElement('DIV');
+			el.classList.add('w3-sidebar');
+			el.classList.add('w3-bar-block');
+			el.classList.add('w3-card');
+
+			el.setAttribute('style', "width:25%;right:0;");
+
+			const title = document.createElement('H3');
+			title.classList.add('w3-bar-item');
+			title.innerHTML = "Settings";
+
+			el.appendChild(title);
+
+			// create toggle btn
+			const tgLabel = document.createElement('LABEL');
+			tgLabel.classList.add('switch');
+			const tgInput = document.createElement('INPUT');
+			tgInput.setAttribute('type', 'checkbox');
+			const tgSpan = document.createElement('SPAN');
+			tgSpan.classList.add('slider');
+
+			tgLabel.appendChild(tgInput);
+			tgLabel.appendChild(tgSpan);
+
+			el.appendChild(tgLabel);
+
+			return el;
+
+
 		}
 
 		function addNode(graph, id, type, x, y) {
 			let node = null;
 			var pn = joint.shapes.pn;
+			var nodeId = graph.id + '-' + id
 			if(type == 'place') {
 				node = new pn.Place({
-				    id: id,
+				    id: nodeId,
     				    position: { x: x, y: y },
 				    attrs: {
 					'.label': {
@@ -293,7 +392,7 @@
 					'.root': {
 					    'stroke': '#9586fd',
 					    'stroke-width': 3,
-					    'id': id
+					    'id': nodeId
 					},
 					'.tokens > circle': {
 					    'fill': '#7a7e9b'
@@ -307,6 +406,7 @@
 			}
 			if(type == 'transition') {
 				node = new pn.Transition({
+				    id: nodeId,
     				    position: { x: x, y: y },
 				    attrs: {
 					'.label': {
@@ -315,7 +415,8 @@
 					},
 					'.root': {
 					    'fill': '#9586fd',
-					    'stroke': '#9586fd'
+					    'stroke': '#9586fd',
+					    'id': nodeId
 					}
 				    }
 				});
@@ -331,10 +432,11 @@
 		function drawNet(elId, netId) {
 			var net = db.nets[netId];
 			var graph = new joint.dia.Graph();
+			graph.id = netId;
 			var el = document.getElementById(elId);
 			paperWrapper = el.getBoundingClientRect();
 			console.log(paperWrapper)
-			paperWidth = (!paperWidth) ? $(window).width() - paperWrapper.x - 10 : paperWidth;
+			paperWidth = (!paperWidth) ? $(window).width() - (0.25 * paperWrapper.x) - 10 : paperWidth;
 			paperHeight = (!paperHeight) ? $(window).height() - paperWrapper.y - 10 : paperHeight;
 			var paper = new joint.dia.Paper({
 			    el: document.getElementById(elId),
@@ -448,13 +550,15 @@
 				let node = null;
 				if(type == 'place') {
 					node = new pn.Place({
+				    	    id: id,
 					    attrs: {
 						'.label': {
 						    'text': id,
 						    'fill': '#7c68fc' },
 						'.root': {
 						    'stroke': '#9586fd',
-						    'stroke-width': 3
+						    'stroke-width': 3,
+						    'id': id
 						},
 						'.tokens > circle': {
 						    'fill': '#7a7e9b'
@@ -465,6 +569,7 @@
 				}
 				if(type == 'transition') {
 					node = new pn.Transition({
+				    	    id: id,
 					    attrs: {
 						'.label': {
 						    'text': id,
@@ -472,7 +577,8 @@
 						},
 						'.root': {
 						    'fill': '#9586fd',
-						    'stroke': '#9586fd'
+						    'stroke': '#9586fd',
+						    'id': id
 						}
 					    }
 					});
@@ -486,8 +592,8 @@
 				net.arcs.forEach(function(a) {
 					const src = a.src;
 					const dst = a.dst;
-					const sNode = createNode(src.id, src.type)
-					const dNode = createNode(dst.id, dst.type)
+					const sNode = createNode(netId+'-'+src.id, src.type)
+					const dNode = createNode(netId+'-'+dst.id, dst.type)
 					graph.addCell([sNode, dNode]);
 					graph.addCell([link(sNode,dNode)]);
 				})
