@@ -166,6 +166,16 @@
 			})
 		}
 
+		function addToken(netId, placeId, tokenId) {
+			const targetId = netId + "-" + placeId
+			const p = currentGraph.getCell(targetId);
+			if(p && (p.attributes.type == 'pn.Place')) {
+				p.set('tokens', p.get('tokens') + 1);
+				console.log(`Cell: ${targetId}: ${JSON.stringify(p)}`)
+			}
+
+		}
+
 		function drop(ev) {
 			const id = ev.dataTransfer.getData("nodeId");
 			const type = ev.dataTransfer.getData("nodeType");
@@ -179,7 +189,15 @@
 				const targetId = ev.originalTarget.id;
 				const p = currentGraph.getCell(targetId);
 				if(p && (p.attributes.type == 'pn.Place')) {
+					const netId = targetId.split("-")[0];
+					const placeId = targetId.split("-")[1];
+					const tokenId = id;
 					p.set('tokens', p.get('tokens') + 1);
+					socket.emit("PutToken", { 
+						net: netId,
+						place: placeId,
+						token: tokenId
+					})
 					console.log(`Cell: ${targetId}: ${JSON.stringify(p)}`)
 				}
 
@@ -638,10 +656,13 @@
 		// open web socket
                 socket = io()
                 socket.emit('ready', '');
+		socket.on('TokenMove', function(data) {
+			console.log("tokenmove> ", data)
+			addToken(data.net, data.place, data.token)
+		})
 		socket.on('identity', function(data) {
 			console.log("identity> ", data)
 			createModal('x509', 'My Identity', JSON.parse(data));
-
 		})
 
 		socket.on('tokens', function(data) {

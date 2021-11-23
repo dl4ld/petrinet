@@ -1,15 +1,57 @@
 {
 	"places": [
-		{"id": "P001", "isLocked": false}
+		{"id": "P001", "isLocked": false},
+		{"id": "P002", "isLocked": false},
+		{"id": "P003", "isLocked": false},
+		{"id": "P004", "isLocked": false},
+		{"id": "P005", "isLocked": false},
+		{"id": "P006", "isLocked": false},
+		{"id": "P007", "isLocked": false},
+		{"id": "P008", "isLocked": false},
+		{"id": "P009", "isLocked": false},
+		{"id": "P010", "isLocked": false}
 	],
 	"tokens": [
 		{ "id": "TK001", "color": "blue" },
 		{ "id": "TK002", "color": "blue" }
 	],
 	"transitions": [
-		{ "id": "T001", "action": { "type": "nl.dl4ld.webhook", "webhookURI": "https://webhook.site/13f5cfd1-92a4-4438-adf0-0d442a8c626c" }}
+		{ "id": "T001", "action": { "type": "nl.dl4ld.function", "functionName": "foo" }},
+		{ "id": "T002", "action": { "type": "nl.dl4ld.function", "functionName": "foo" }},
+		{ "id": "T003", "action": { "type": "nl.dl4ld.function", "functionName": "foo" }},
+		{ "id": "T004", "action": { "type": "nl.dl4ld.function", "functionName": "foo" }},
+		{ "id": "T005", "action": { "type": "nl.dl4ld.function", "functionName": "foo" }},
+		{ "id": "T006", "action": { "type": "nl.dl4ld.function", "functionName": "foo" }},
+		{ "id": "T007", "action": { "type": "nl.dl4ld.function", "functionName": "foo" }}
 	],
 	"nets": [
+		{
+			"id": "N004",
+			"admin": "Org1MSP",
+			"config": {
+				"k": 10
+			},
+			"arcs": [
+				{ "src": {"type": "place",	"id": "P001"}, "dst": { "type": "transition", "id": "T001"}},
+				{ "src": {"type": "transition",	"id": "T001"}, "dst": { "type": "place", "id": "P002"}},
+				{ "src": {"type": "transition",	"id": "T001"}, "dst": { "type": "place", "id": "P003"}},
+				{ "src": {"type": "transition",	"id": "T001"}, "dst": { "type": "place", "id": "P004"}},
+				{ "src": {"type": "transition",	"id": "T001"}, "dst": { "type": "place", "id": "P005"}},
+				{ "src": {"type": "place",	"id": "P002"}, "dst": { "type": "transition", "id": "T003"}},
+				{ "src": {"type": "place",	"id": "P003"}, "dst": { "type": "transition", "id": "T004"}},
+				{ "src": {"type": "place",	"id": "P004"}, "dst": { "type": "transition", "id": "T005"}},
+				{ "src": {"type": "place",	"id": "P005"}, "dst": { "type": "transition", "id": "T006"}},
+				{ "src": {"type": "transition",	"id": "T003"}, "dst": { "type": "place", "id": "P006"}},
+				{ "src": {"type": "transition",	"id": "T004"}, "dst": { "type": "place", "id": "P007"}},
+				{ "src": {"type": "transition",	"id": "T005"}, "dst": { "type": "place", "id": "P008"}},
+				{ "src": {"type": "transition",	"id": "T006"}, "dst": { "type": "place", "id": "P009"}},
+				{ "src": {"type": "place",	"id": "P006"}, "dst": { "type": "transition", "id": "T007"}},
+				{ "src": {"type": "place",	"id": "P007"}, "dst": { "type": "transition", "id": "T007"}},
+				{ "src": {"type": "place",	"id": "P008"}, "dst": { "type": "transition", "id": "T007"}},
+				{ "src": {"type": "place",	"id": "P009"}, "dst": { "type": "transition", "id": "T007"}},
+				{ "src": {"type": "transition",	"id": "T007"}, "dst": { "type": "place", "id": "P010"}}
+			]
+		},
 		{
 			"id": "N001",
 			"admin": "Org1MSP",
@@ -27,6 +69,7 @@
 		{
 			"id": "N001",
 			"admin": "Org1MSP",
+			"disabled": "true",
 			"config": {
 				"k": 1
 			},
@@ -37,6 +80,7 @@
 		{
 			"id": "N003",
 			"admin": "Org1MSP",
+			"disabled": "true",
 			"config": {
 				"k":1
 			},
@@ -49,9 +93,9 @@
 		}
 	],
 	"instructions": [
-			{ "cmd": "move", "net": "N003", "token": "TK001", "place": "P001" }
 	],
 	"other":[
+			{ "cmd": "move", "net": "N003", "token": "TK001", "place": "P001" },
 			{ "cmd": "delete", "asset": "transition", "id": "T001" },
 			{ "cmd": "move", "net": "N001", "token": "TK002", "place": "P001" }
 	]

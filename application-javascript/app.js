@@ -287,6 +287,11 @@ async function createAndMoveToken(ctx, netId, placeId) {
 				cb(err, null);
 			});
 	})
+	return {
+		net: netId,
+		place: placeId,
+		token: tokenId
+	}
 }
 
 async function handleNewNet(ctx, event) {
@@ -345,7 +350,11 @@ function eventHandler(ctx, event) {
 								console.log(`${GREEN}<-- Finished transition handler for ${asset.action.type}${RESET}`);
 								await completeTransition(ctx, asset.net, asset.id);
 								asset.outputs.forEach(o => {
-									createAndMoveToken(ctx, asset.net, o.id);
+									const result = createAndMoveToken(ctx, asset.net, o.id);
+									result.then(data => {
+										console.log("HHHHHHHHHHHHHHH1");
+										eventEmitter.emit('TokenMove', data)
+									})
 								});
 							})
 							.catch(e => {
@@ -361,6 +370,9 @@ function eventHandler(ctx, event) {
 	} catch (eventError) {
 		console.log(`${RED}<-- Failed: Event handler - ${eventError}${RESET}`);
 	}
+}
+
+async function startHttpServer() {
 }
 
 async function main() {
@@ -427,6 +439,10 @@ async function main() {
 					let transaction;
 					let resultBuffer;
 					let asset;
+					if(t.action.type == "nl.dl4ld.function") {
+						transaction = contract1Org.createTransaction('CreateFunctionTransition');
+						resultBuffer = await transaction.submit(assetKey, t.action.functionName, "");
+					}
 					if(t.action.type == "nl.dl4ld.webhook"){
 						transaction = contract1Org.createTransaction('CreateWebhookTransition');
 						resultBuffer = await transaction.submit(assetKey, t.action.webhookURI, "");
@@ -581,7 +597,6 @@ async function main() {
 		}
 
 	}, 5000);*/
-	
 	let server = null
 	if(options.https) {
 		const privateKey = fs.readFileSync(oprions.privkey).toString();
@@ -668,6 +683,30 @@ async function main() {
 			socket.emit('places', places);
 			console.log(`${GREEN}<-- Submit GetAllPlaces Result: ${places}${RESET}`);
 
+			eventEmitter.on("TokenMove", (data) => {
+				console.log("HHHHHHHHHHHHHHH2", data);
+				socket.emit("TokenMove", data)
+			});
+
+			socket.on('PutToken', (data) => {
+				console.log(`event PutToken ${JSON.stringify(data)}`);
+				
+				async.retry({times:50, interval: 5000}, function(cb){
+					console.log(`${GREEN}--> Submit Transaction: PutToken`);
+					const transaction = contract1Org.createTransaction('PutToken');
+					transaction.submit(data.token, data.net, data.place)
+						.then(resultBuffer => {
+							const asset = resultBuffer.toString('utf8');
+							console.log(`${GREEN}<-- Submit PutToken Result: committed, asset ${asset}`);
+							cb(null, asset);
+						})
+						.catch(err => {
+							console.log(`${RED}<-- Submit Failed: PutToken - ${err}${RESET}`);
+							cb(err, null);
+						});
+				})
+			});
+
 
 		} catch (createError) {
 			console.log(`${RED}<-- Submit Failed: CreatePlace - ${createError}${RESET}`);
@@ -717,6 +756,7 @@ async function main() {
 	})
 
 	server.listen(port);
+	
 }
 main();
 

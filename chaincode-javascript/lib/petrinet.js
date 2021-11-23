@@ -414,14 +414,22 @@ class Petrinet extends Contract {
 	    if(verified) {
 		//asset.arcs = arcs
 		asset.domains[asset.owner] = { status: "Accepted" }
-		if(Object.values(asset.domains).every(d => { d.status ==  "Accepted" })) {
+		if(Object.values(asset.domains).every(d => { return (d.status ==  "Accepted") }) ) {
+			console.log("HERE1")
 			asset.status = "ACTIVE"
+			console.log("asset key: ", key)
+			await ctx.stub.putState(key, Buffer.from(JSON.stringify(asset)));
+			const assetBuffer = Buffer.from(JSON.stringify(asset));
+			await ctx.stub.setEvent('NewNet', assetBuffer);
+			return asset;
+		} else {
+			console.log("HERE2")
+			console.log("asset key: ", key)
+			await ctx.stub.putState(key, Buffer.from(JSON.stringify(asset)));
+			const assetBuffer = Buffer.from(JSON.stringify(asset));
+			await ctx.stub.setEvent('NewNet', assetBuffer);
+			return asset;
 		}
-		console.log("asset key: ", key)
-            	await ctx.stub.putState(key, Buffer.from(JSON.stringify(asset)));
-		const assetBuffer = Buffer.from(JSON.stringify(asset));
-		await ctx.stub.setEvent('NewNet', assetBuffer);
-		return asset;
 	    } else {
 		throw new Error(`Petrinet creation failed ${netId}`);
 	    }
@@ -562,6 +570,23 @@ class Petrinet extends Contract {
 			type: "nl.dl4ld.webhook",
 			uri: webhookURI,
 			headers: headers
+		    },
+		    status: "READY"
+	    }
+            await ctx.stub.putState(key, Buffer.from(JSON.stringify(transition)));
+	    return transition
+    }
+    
+    async CreateFunctionTransition(ctx, transitionId, functionName, params) {
+	    const key = ctx.stub.createCompositeKey(this.name, ['transition', transitionId])
+	    const transition = {
+		    id: transitionId,
+		    issuer: ctx.clientIdentity.getID(),
+		    owner: ctx.clientIdentity.getMSPID(),
+		    action: {
+			type: "nl.dl4ld.function",
+			functionName: functionName,
+			params: params
 		    },
 		    status: "READY"
 	    }
