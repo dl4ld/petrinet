@@ -245,13 +245,13 @@ function showTransactionData(transactionData) {
 	}
 }
 
-async function completeTransition(ctx, netId, transitionId) {
+async function completeTransition(ctx, netId, transitionId, tokenIds) {
 	try {
-		console.log(`${GREEN}--> Submit Transaction: CompleteTransition, ${transitionId}, ${netId}`);
+		console.log(`${GREEN}--> Submit Transaction: CompleteTransition, ${transitionId}, ${netId} with output tokens ${tokenIds}`);
 		//const transaction = ctx.contract.createTransaction('CompleteTransition');
 		//const resultBuffer = await transaction.submit(netId, transitionId);
 		//const result = resultBuffer.toString('utf8');
-		const result = await submit(ctx, 'CompleteTransition', netId, transitionId);
+		const result = await submit(ctx, 'CompleteTransition', netId, transitionId, JSON.stringify(tokenIds));
 		console.log(`${GREEN}<-- Submit CompleteTransaction Result: committed ${JSON.stringify(result)}`);
 	} catch (createError) {
 		console.log(`${RED}<-- Submit Failed: CreateToken - ${createError}${RESET}`);
@@ -280,6 +280,11 @@ async function createAndMoveToken(ctx, netId, placeId) {
 			.then(resultBuffer => {
 				const asset = resultBuffer.toString('utf8');
 				console.log(`${GREEN}<-- Submit PutToken Result: committed, asset ${asset}`);
+				//eventEmmiter.emit('PutToken', {
+				//	net: netId,
+				//	place: placeId,
+				//	token: tokenId
+				//})
 				cb(null, asset);
 			})
 			.catch(err => {
@@ -336,6 +341,19 @@ function eventHandler(ctx, event) {
 	try {
 		const asset = JSON.parse(event.payload.toString('utf8'));
 		switch  (event.eventName) {
+			case "PutRemoveTokens":
+				console.log(asset);
+				asset.forEach(e => {
+					console.log(e)
+					eventEmitter.emit(e.type, e.data)
+				});
+				break;
+			case "PutToken":
+				eventEmitter.emit('PutToken', asset);
+				break;
+			case "RemoveToken":
+				eventEmitter.emit('RemoveToken', asset);
+				break;
 			case "NewNet":
 				handleNewNet(ctx, event);
 				break;
@@ -348,14 +366,13 @@ function eventHandler(ctx, event) {
 						handler(ctx, event)
 							.then(async ()=>{
 								console.log(`${GREEN}<-- Finished transition handler for ${asset.action.type}${RESET}`);
-								await completeTransition(ctx, asset.net, asset.id);
-								asset.outputs.forEach(o => {
-									const result = createAndMoveToken(ctx, asset.net, o.id);
-									result.then(data => {
-										console.log("HHHHHHHHHHHHHHH1");
-										eventEmitter.emit('TokenMove', data)
-									})
-								});
+								const tokenIds = asset.outputs.map(o => {
+									return 'TK' + (Math.floor(Math.random() * 999) + 1);
+								})
+								await completeTransition(ctx, asset.net, asset.id, tokenIds);
+								//asset.outputs.forEach(o => {
+								//	const result = createAndMoveToken(ctx, asset.net, o.id);
+								//});
 							})
 							.catch(e => {
 								throw new Error(e);
@@ -683,9 +700,11 @@ async function main() {
 			socket.emit('places', places);
 			console.log(`${GREEN}<-- Submit GetAllPlaces Result: ${places}${RESET}`);
 
-			eventEmitter.on("TokenMove", (data) => {
-				console.log("HHHHHHHHHHHHHHH2", data);
-				socket.emit("TokenMove", data)
+			eventEmitter.on("PutToken", (data) => {
+				socket.emit("PutToken", data)
+			});
+			eventEmitter.on("RemoveToken", (data) => {
+				socket.emit("RemoveToken", data)
 			});
 
 			socket.on('PutToken', (data) => {

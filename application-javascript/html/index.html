@@ -165,6 +165,16 @@
 				}
 			})
 		}
+		
+   		function removeToken(netId, placeId, tokenId) {
+			const targetId = netId + "-" + placeId
+			const p = currentGraph.getCell(targetId);
+			if(p && (p.attributes.type == 'pn.Place')) {
+				p.set('tokens', p.get('tokens') - 1);
+				console.log(`Cell: ${targetId}: ${JSON.stringify(p)}`)
+			}
+
+		}
 
 		function addToken(netId, placeId, tokenId) {
 			const targetId = netId + "-" + placeId
@@ -656,9 +666,13 @@
 		// open web socket
                 socket = io()
                 socket.emit('ready', '');
-		socket.on('TokenMove', function(data) {
-			console.log("tokenmove> ", data)
+		socket.on('PutToken', function(data) {
+			console.log("puttoken> ", data)
 			addToken(data.net, data.place, data.token)
+		})
+		socket.on('RemoveToken', function(data) {
+			console.log("removetoken> ", data)
+			removeToken(data.net, data.place, data.token)
 		})
 		socket.on('identity', function(data) {
 			console.log("identity> ", data)

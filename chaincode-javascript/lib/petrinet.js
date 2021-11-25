@@ -128,9 +128,9 @@ class Petrinet extends Contract {
 	    }
 
 	    // I can not do anything with others' tokens
-	    if(token.owner != myOrgId) {
-		throw new Error(`You do not own token ${tokenId}!`);
-	    }
+	    //if(token.owner != myOrgId) {
+	    //	throw new Error(`You do not own token ${tokenId}!`);
+	    //}
 
 	    const firedTransitions = []
 	    // Check if token and place are owned by same org.
@@ -154,6 +154,14 @@ class Petrinet extends Contract {
 	    // Move token to place.
 	    place.tokens.push(token)
 	    await ctx.stub.putState(placeKey, Buffer.from(JSON.stringify(place)));
+	    // Generate PutToken event
+	    const eventData = {
+		    net: netId,
+		    place: placeId,
+		    token: tokenId,
+	    }
+	    const eventBuffer = Buffer.from(JSON.stringify(eventData));
+	    await ctx.stub.setEvent('PutToken', eventBuffer);
 
 	    // Check for fired transitions with new token move
 	    const arcs = net.arcs.filter(arc => {
@@ -222,22 +230,24 @@ class Petrinet extends Contract {
 	    }
     }
 
-    async CompleteTransition(ctx, netId, transitionId) {
+    async CompleteTransition(ctx, netId, transitionId, tokenIds) {
 	    const myOrgId = ctx.clientIdentity.getMSPID();
 	    const netKey = ctx.stub.createCompositeKey(this.name, ['net', netId]);
 	    const transitionKey = ctx.stub.createCompositeKey(this.name, ['transition', transitionId]);
 	    const transition = await getAssetJSON(ctx, transitionKey);
 	    const net = await getAssetJSON(ctx, netKey);
+	    const tokenArray = JSON.parse(tokenIds);
 	    if(!net || !transition) {
 		throw new Error(`Could not proceed with CompleteTransition as an asset was not found!`);
 	    }
 
 	    const effectedPlaces = [];
+	    const events = [];
 
-	    const inputPlaces = getInputsById(net, transitionId)
+	    const inputPromises = getInputsById(net, transitionId)
 		    .filter(p => { 
 			    return (p.type == 'place') })
-		    .forEach(async p => {
+		    .map(async p => {
 
 			    const placeKey = ctx.stub.createCompositeKey(this.name, ['place', p.id]);
 			    const place = await getAssetJSON(ctx, placeKey);
@@ -245,13 +255,90 @@ class Petrinet extends Contract {
 				    throw new Error(`You do not own place.`);
 			    }
 			    console.log(`CompleteTransaction ${JSON.stringify(place)}`);
-			    place.tokens.pop();
+			    const token = place.tokens.pop();
+			    if(token) {
+				    // Generate RemoveToken event
+				    const eventData = {
+					    net: netId,
+					    place: p.id,
+					    token: token.id
+				    }
+				    const eventBuffer = Buffer.from(JSON.stringify(eventData));
+				    events.push({
+					    type: 'RemoveToken',
+					    data: eventData
+				    })
+			            //await ctx.stub.setEvent('RemoveToken', eventBuffer);
+			    }
 			    console.log(`Tokens ${place.tokens.length}`);
 			    effectedPlaces.push(place);
 	    		    await ctx.stub.putState(placeKey, Buffer.from(JSON.stringify(place)));
 		    })
+	    const outputPromises = getOutputsById(net, transitionId)
+	    		.filter(p => {return (p.type == 'place')})
+	    		.map(async p => {
+				try {
+					console.log(`CompleteTransition outputs: ${JSON.stringify(p)}`)
+					const placeKey = ctx.stub.createCompositeKey(this.name, ['place', p.id]);
+					const place = await getAssetJSON(ctx, placeKey);
+
+					// Create token
+					const tokenId = tokenArray.pop();
+					const key = ctx.stub.createCompositeKey(this.name, ['token', tokenId])
+					const token = {
+						    id: tokenId,
+						    issuer: ctx.clientIdentity.getID(),
+						    owner: ctx.clientIdentity.getMSPID(),
+						    //color: JSON.parse(color),
+						    status: "READY"
+					}
+
+					await ctx.stub.putState(key, Buffer.from(JSON.stringify(token)));
+
+					// Add token to place
+					place.tokens.push(token);
+					await ctx.stub.putState(placeKey, Buffer.from(JSON.stringify(place)));
+
+					// Generate event
+					const eventData = {
+					    net: netId,
+					    place: p.id,
+					    token: token.id
+					}
+					const eventBuffer = Buffer.from(JSON.stringify(eventData));
+					events.push({
+						    type: 'PutToken',
+						    data: eventData
+					})
+
+					//await ctx.stub.setEvent('PutToken', eventBuffer);
+					//console.log(`Generated event: ${JSON.stringify(eventData)}`);
+					
+					// Check for firing
+					const placePromises = getOuputById(net, p.id)
+						.filter(t => {return (t.type == 'transition')})
+						.map(async t => {
+							const transitionInputs = getInputsById(net, t.id)
+								.map(i => {
+									console.log(`Transition ${t.id} input: ${i}`)
+									// TODO
+								})
+						})
+
+				} catch(err) {
+					console.log(err)
+				}
+
+			})
+	    try {
+	    await Promise.all([...inputPromises, ...outputPromises]);
+	    } catch(err) {
+		    console.log(err)
+	    }
 	    transition.status = "READY"
 	    await ctx.stub.putState(transitionKey, Buffer.from(JSON.stringify(transition)));
+	    const eventBuffer = Buffer.from(JSON.stringify(events));
+	    await ctx.stub.setEvent('PutRemoveTokens', eventBuffer);
 	    return {
 		    action: "CompletedTransition",
 		    effectedPlaces: effectedPlaces
