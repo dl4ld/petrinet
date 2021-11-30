@@ -102,6 +102,14 @@ async function getAllResults(iterator, isHistory) {
         }  // while true
     }
 
+async function sleep(n) {
+	return new Promise((resolve, reject) => {
+		setTimeout(() => {
+			resolve();
+		}, n)
+	})
+}
+
 
 class Petrinet extends Contract {
 
@@ -231,6 +239,7 @@ class Petrinet extends Contract {
     }
 
     async CompleteTransition(ctx, netId, transitionId, tokenIds) {
+	    const that = this;
 	    const myOrgId = ctx.clientIdentity.getMSPID();
 	    const netKey = ctx.stub.createCompositeKey(this.name, ['net', netId]);
 	    const transitionKey = ctx.stub.createCompositeKey(this.name, ['transition', transitionId]);
@@ -315,23 +324,101 @@ class Petrinet extends Contract {
 					//console.log(`Generated event: ${JSON.stringify(eventData)}`);
 					
 					// Check for firing
-					const placePromises = getOuputById(net, p.id)
+					const placePromises = getOutputsById(net, p.id)
+						.filter(t => {return (t.type == 'transition')})
+						.map(t => {
+							return new Promise((resolve, reject) => {
+								// If all inputs have a token fire transition
+								const inputPlaces = getInputsById(net, t.id)
+									.map(async p => {
+										if(p.id == place.id) {
+											//console.log(`Input place for transition ${t.id}, ${JSON.stringify(place)}`)
+											return place;
+										} else {
+											const placeKey = ctx.stub.createCompositeKey(that.name, ['place', p.id]);
+											const place = await getAssetJSON(ctx, placeKey);
+											//console.log(`Input place for transition ${t.id}, ${JSON.stringify(place)}`)
+											return place;
+										}
+									})
+
+								//const ips = await Promise.all(inputPlaces)
+								Promise.all(inputPlaces).then(ips => {
+									const mustFire = ips.every(t => {
+										//console.log(`Places: ${JSON.stringify(t)}`);
+										return (t.tokens.length > 0)
+									})
+
+									if(mustFire) {
+										const transitionKey = ctx.stub.createCompositeKey(that.name, ['transition', t.id]);
+										const transition = getAssetJSON(ctx, transitionKey)
+										.then(transition => {
+											transition.outputs = getOutputsById(net, t.id);
+											transition.net = net.id;
+											events.push({
+												type: "Fire",
+												data: transition
+											})
+											console.log(`Transition ${t.id} WILL fire!`);
+											console.log(transition)
+											resolve();
+										}).catch(err => {
+											reject(err);
+										})
+									} else {
+										console.log(`Transition ${t.id} NOT fire!`);
+										resolve();
+									}
+								})
+								.catch(err => {reject(err)})
+							}) //Promise
+						}) // map
+
+					await Promise.all(placePromises);
+
+				} catch(err) {
+					console.log(err)
+				}
+			})
+
+	    /*const firingPromises = getOutputsById(net, transitionId)
+	    		.filter(p => {return (p.type == 'place')})
+	    		.map(async p => {
+				try {
+					// Check for firing
+					const placePromises = getOutputsById(net, p.id)
 						.filter(t => {return (t.type == 'transition')})
 						.map(async t => {
-							const transitionInputs = getInputsById(net, t.id)
-								.map(i => {
-									console.log(`Transition ${t.id} input: ${i}`)
-									// TODO
+							// If all inputs have a token fire transition
+							const mustFire = getInputsById(net, t.id)
+								.map(async p => {
+									const placeKey = ctx.stub.createCompositeKey(this.name, ['place', p.id]);
+									const place = await getAssetJSON(ctx, placeKey);
+									console.log(`Input place for transition ${t.id}, ${JSON.stringify(place)}`)
+									return place.tokens
 								})
+								.every(t => {
+									return (t.length > 0)
+								})
+							if(mustFire) {
+								console.log(`Transition ${t.id} must fire!`);
+								t.outputs = getOutputsById(net, t.id);
+								t.net = net.id;
+								events.push({
+									type: "Fire",
+									data: t
+								})
+							}
+
 						})
 
 				} catch(err) {
 					console.log(err)
 				}
 
-			})
+			})*/
 	    try {
-	    await Promise.all([...inputPromises, ...outputPromises]);
+	    	await Promise.all([...inputPromises, ...outputPromises,]);
 	    } catch(err) {
 		    console.log(err)
 	    }
@@ -339,6 +426,8 @@ class Petrinet extends Contract {
 	    await ctx.stub.putState(transitionKey, Buffer.from(JSON.stringify(transition)));
 	    const eventBuffer = Buffer.from(JSON.stringify(events));
 	    await ctx.stub.setEvent('PutRemoveTokens', eventBuffer);
+	    console.log(`New events ${JSON.stringify(events)}`)
+	    console.log(`completeTransition ${transitionId} returning`);
 	    return {
 		    action: "CompletedTransition",
 		    effectedPlaces: effectedPlaces

@@ -114,6 +114,17 @@ function loadModules(dir) {
 }
 
 let channel = null
+const queue = async.queue(function(task, cb) {
+	console.log("Busy with " + task.name);
+	task.f.apply(null, task.params)
+	.then(result => {
+		cb(null, result)
+	})
+	.catch(err => {
+		cb(err, null)
+	})
+
+}, 1);
 
 async function initAmqp(config) {
 	try {
@@ -345,7 +356,15 @@ function eventHandler(ctx, event) {
 				console.log(asset);
 				asset.forEach(e => {
 					console.log(e)
-					eventEmitter.emit(e.type, e.data)
+					if(e.type == "Fire") {
+						const fireEvent = {
+							eventName: "Fire",
+							payload: JSON.stringify(e.data)
+						}
+						eventHandler(ctx, fireEvent)
+					} else {
+						eventEmitter.emit(e.type, e.data)
+					}
 				});
 				break;
 			case "PutToken":
@@ -358,7 +377,8 @@ function eventHandler(ctx, event) {
 				handleNewNet(ctx, event);
 				break;
 			case "Fire":
-				const eventTransaction = event.getTransactionEvent();
+				// TODO serialize this qith queue
+				//const eventTransaction = event.getTransactionEvent();
 				if(asset.owner == orgMSP) {
 					const handler = moduleHolder[asset.action.type]
 					if(handler) {
@@ -369,7 +389,16 @@ function eventHandler(ctx, event) {
 								const tokenIds = asset.outputs.map(o => {
 									return 'TK' + (Math.floor(Math.random() * 999) + 1);
 								})
-								await completeTransition(ctx, asset.net, asset.id, tokenIds);
+								queue.push({
+									name: `completeTransition ${asset.id}`,
+									f: completeTransition,
+									params: [ctx, asset.net, asset.id, tokenIds]
+								}, (err, result) => {
+									if(err) {
+										console.log(err);
+									}
+								})
+								//await completeTransition(ctx, asset.net, asset.id, tokenIds);
 								//asset.outputs.forEach(o => {
 								//	const result = createAndMoveToken(ctx, asset.net, o.id);
 								//});
