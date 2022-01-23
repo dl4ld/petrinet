@@ -1,55 +1,63 @@
 {
 	"places": [
-		{"id": "P001", "isLocked": false},
-		{"id": "P002", "isLocked": false},
-		{"id": "P003", "isLocked": false},
-		{"id": "P004", "isLocked": false},
-		{"id": "P005", "isLocked": false},
-		{"id": "P006", "isLocked": false},
-		{"id": "P007", "isLocked": false},
-		{"id": "P008", "isLocked": false},
-		{"id": "P009", "isLocked": false},
-		{"id": "P010", "isLocked": false}
+		{"id": "P001", "isLocked": false, "type": "AUTH"},
+		{"id": "P011", "isLocked": false, "type": "DATA"},
+		{"id": "P002", "isLocked": false, "type": "AUTH"},
+		{"id": "P003", "isLocked": false, "type": "AUTH"},
+		{"id": "P004", "isLocked": false, "type": "AUTH"},
+		{"id": "P005", "isLocked": false, "type": "AUTH"},
+		{"id": "P006", "isLocked": false, "type": "AUTH"},
+		{"id": "P007", "isLocked": false, "type": "AUTH"},
+		{"id": "P008", "isLocked": false, "type": "AUTH"},
+		{"id": "P009", "isLocked": false, "type": "AUTH"},
+		{"id": "P010", "isLocked": false, "type": "AUTH"}
 	],
 	"tokens": [
-		{ "id": "TK001", "color": "blue" },
-		{ "id": "TK002", "color": "blue" }
+		{ "id": "TK001", "data": {}, "owner": "Org1MSP", "type": "AUTH" },
+		{ "id": "TK002", "data": {}, "owner": "Org2MSP", "type": "AUTH" },
+		{ "id": "TK003", "data": {}, "owner": "Org3MSP", "type": "AUTH" },
+		{ "id": "TK055", "data": {"ips":["192.168.1.10"]}, "owner": "Org1MSP", "type": "DATA" },
+		{ "id": "TK004", "data": {}, "owner": "Org4MSP", "type": "AUTH" }
 	],
 	"transitions": [
-		{ "id": "T001", "action": { "type": "nl.dl4ld.function", "functionName": "foo" }},
-		{ "id": "T002", "action": { "type": "nl.dl4ld.function", "functionName": "foo" }},
-		{ "id": "T003", "action": { "type": "nl.dl4ld.function", "functionName": "foo" }},
-		{ "id": "T004", "action": { "type": "nl.dl4ld.function", "functionName": "foo" }},
-		{ "id": "T005", "action": { "type": "nl.dl4ld.function", "functionName": "foo" }},
-		{ "id": "T006", "action": { "type": "nl.dl4ld.function", "functionName": "foo" }},
-		{ "id": "T007", "action": { "type": "nl.dl4ld.function", "functionName": "foo" }}
+		{ "id": "ddos_alert", "action": { "type": "nl.dl4ld.function", "functionName": "alert", "params":{} }},
+		{ "id": "as20r1", "action": { "type": "nl.dl4ld.function", "functionName": "block", "params": {"name":"as20r1"} }},
+		{ "id": "as30r1", "action": { "type": "nl.dl4ld.function", "functionName": "block", "params": {"name":"as30r1"} }},
+		{ "id": "as100r1", "action": { "type": "nl.dl4ld.function", "functionName": "block", "params": {"name":"as100r1"} }},
+		{ "id": "as200r1", "action": { "type": "nl.dl4ld.function", "functionName": "block", "params": {"name":"as200r1"} }},
+		{ "id": "ddos_defense", "action": { "type": "nl.dl4ld.function", "functionName": "done", "params": {} }}
 	],
 	"nets": [
 		{
 			"id": "N004",
 			"admin": "Org1MSP",
 			"config": {
-				"k": 10
+				"k": 1,
+				"type": "workflow",
+				"startPlace": "P001",
+				"endPlace": "P010",
+				"resetOnEnd": true
 			},
 			"arcs": [
-				{ "src": {"type": "place",	"id": "P001"}, "dst": { "type": "transition", "id": "T001"}},
-				{ "src": {"type": "transition",	"id": "T001"}, "dst": { "type": "place", "id": "P002"}},
-				{ "src": {"type": "transition",	"id": "T001"}, "dst": { "type": "place", "id": "P003"}},
-				{ "src": {"type": "transition",	"id": "T001"}, "dst": { "type": "place", "id": "P004"}},
-				{ "src": {"type": "transition",	"id": "T001"}, "dst": { "type": "place", "id": "P005"}},
-				{ "src": {"type": "place",	"id": "P002"}, "dst": { "type": "transition", "id": "T003"}},
-				{ "src": {"type": "place",	"id": "P003"}, "dst": { "type": "transition", "id": "T004"}},
-				{ "src": {"type": "place",	"id": "P004"}, "dst": { "type": "transition", "id": "T005"}},
-				{ "src": {"type": "place",	"id": "P005"}, "dst": { "type": "transition", "id": "T006"}},
-				{ "src": {"type": "transition",	"id": "T003"}, "dst": { "type": "place", "id": "P006"}},
-				{ "src": {"type": "transition",	"id": "T004"}, "dst": { "type": "place", "id": "P007"}},
-				{ "src": {"type": "transition",	"id": "T005"}, "dst": { "type": "place", "id": "P008"}},
-				{ "src": {"type": "transition",	"id": "T006"}, "dst": { "type": "place", "id": "P009"}},
-				{ "src": {"type": "place",	"id": "P006"}, "dst": { "type": "transition", "id": "T007"}},
-				{ "src": {"type": "place",	"id": "P007"}, "dst": { "type": "transition", "id": "T007"}},
-				{ "src": {"type": "place",	"id": "P008"}, "dst": { "type": "transition", "id": "T007"}},
-				{ "src": {"type": "place",	"id": "P009"}, "dst": { "type": "transition", "id": "T007"}},
-				{ "src": {"type": "transition",	"id": "T007"}, "dst": { "type": "place", "id": "P010"}}
+				{ "src": {"type": "place",	"id": "P001"}, "dst": { "type": "transition", "id": "ddos_alert"}},
+				{ "src": {"type": "place",	"id": "P011"}, "dst": { "type": "transition", "id": "ddos_alert"}},
+				{ "src": {"type": "transition",	"id": "ddos_alert"}, "dst": { "type": "place", "id": "P002"}},
+				{ "src": {"type": "transition",	"id": "ddos_alert"}, "dst": { "type": "place", "id": "P003"}},
+				{ "src": {"type": "transition",	"id": "ddos_alert"}, "dst": { "type": "place", "id": "P004"}},
+				{ "src": {"type": "transition",	"id": "ddos_alert"}, "dst": { "type": "place", "id": "P005"}},
+				{ "src": {"type": "place",	"id": "P002"}, "dst": { "type": "transition", "id": "as20r1"}},
+				{ "src": {"type": "place",	"id": "P003"}, "dst": { "type": "transition", "id": "as30r1"}},
+				{ "src": {"type": "place",	"id": "P004"}, "dst": { "type": "transition", "id": "as100r1"}},
+				{ "src": {"type": "place",	"id": "P005"}, "dst": { "type": "transition", "id": "as200r1"}},
+				{ "src": {"type": "transition",	"id": "as20r1"}, "dst": { "type": "place", "id": "P006"}},
+				{ "src": {"type": "transition",	"id": "as30r1"}, "dst": { "type": "place", "id": "P007"}},
+				{ "src": {"type": "transition",	"id": "as100r1"}, "dst": { "type": "place", "id": "P008"}},
+				{ "src": {"type": "transition",	"id": "as200r1"}, "dst": { "type": "place", "id": "P009"}},
+				{ "src": {"type": "place",	"id": "P006"}, "dst": { "type": "transition", "id": "ddos_defense"}},
+				{ "src": {"type": "place",	"id": "P007"}, "dst": { "type": "transition", "id": "ddos_defense"}},
+				{ "src": {"type": "place",	"id": "P008"}, "dst": { "type": "transition", "id": "ddos_defense"}},
+				{ "src": {"type": "place",	"id": "P009"}, "dst": { "type": "transition", "id": "ddos_defense"}},
+				{ "src": {"type": "transition",	"id": "ddos_defense"}, "dst": { "type": "place", "id": "P010"}}
 			]
 		},
 		{
@@ -60,8 +68,8 @@
 				"k": 1
 			},
 			"arcs": [
-				{ "src": {"type": "place",	"id": "P001"}, "dst": { "type": "transition", "id": "T001"}},
-				{ "src": {"type": "transition",	"id": "T001"}, "dst": { "type": "place", "id": "P002"}},
+				{ "src": {"type": "place",	"id": "P001"}, "dst": { "type": "transition", "id": "ddos_alert"}},
+				{ "src": {"type": "transition",	"id": "ddos_alert"}, "dst": { "type": "place", "id": "P002"}},
 				{ "src": {"type": "place",	"id": "P002"}, "dst": { "type": "transition", "id": "T002"}},
 				{ "src": {"type": "transition",	"id": "T002"}, "dst": { "type": "place", "id": "P001"}}
 			]
@@ -74,7 +82,7 @@
 				"k": 1
 			},
 			"arcs": [
-				{ "src": {"type": "place",	"id": "P001"}, "dst": { "type": "transition", "id": "T001"}}
+				{ "src": {"type": "place",	"id": "P001"}, "dst": { "type": "transition", "id": "ddos_alert"}}
 			]
 		},
 		{
@@ -86,7 +94,7 @@
 			},
 			"arcs": [
 				{ "src": { "type": "net",  "id": "N001"},  "dst": { "type": "net",  "id": "N002"}},
-				{ "src": {"type": "transition",	"id": "T001"}, "dst": { "type": "place", "id": "P002"}},
+				{ "src": {"type": "transition",	"id": "ddos_alert"}, "dst": { "type": "place", "id": "P002"}},
 				{ "src": {"type": "transition",	"id": "T002"}, "dst": { "type": "place", "id": "P001"}}
 			]
 
@@ -96,7 +104,7 @@
 	],
 	"other":[
 			{ "cmd": "move", "net": "N003", "token": "TK001", "place": "P001" },
-			{ "cmd": "delete", "asset": "transition", "id": "T001" },
+			{ "cmd": "delete", "asset": "transition", "id": "ddos_alert" },
 			{ "cmd": "move", "net": "N001", "token": "TK002", "place": "P001" }
 	]
 }

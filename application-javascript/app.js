@@ -55,11 +55,16 @@ const orgNumber = options['org-number'];
 const userId = options.user || 'appUser1';
 const org = 'org' + orgNumber;
 const orgMSP = 'Org' + orgNumber + 'MSP';
-const buildCCPOrg = (options['org-number'] == 1) ? AppUtils.buildCCPOrg1 : AppUtils.buildCCPOrg2
 const buildWallet = AppUtils.buildWallet;
 const assets = require(options['net-config']);
 const moduleHolder = {};
 const pluginDir = options.plugins || './plugins';
+let buildCCPOrg
+
+if(options['org-number'] == 1) buildCCPOrg = AppUtils.buildCCPOrg1
+if(options['org-number'] == 2) buildCCPOrg = AppUtils.buildCCPOrg2
+if(options['org-number'] == 3) buildCCPOrg = AppUtils.buildCCPOrg3
+
 
 /**
  * Perform a sleep -- asynchronous wait
@@ -265,7 +270,7 @@ async function completeTransition(ctx, netId, transitionId, tokenIds) {
 		const result = await submit(ctx, 'CompleteTransition', netId, transitionId, JSON.stringify(tokenIds));
 		console.log(`${GREEN}<-- Submit CompleteTransaction Result: committed ${JSON.stringify(result)}`);
 	} catch (createError) {
-		console.log(`${RED}<-- Submit Failed: CreateToken - ${createError}${RESET}`);
+		console.log(`${RED}<-- Submit Failed: CompleteTransition - ${createError}${RESET}`);
 	}
 }
 
@@ -278,7 +283,7 @@ async function createAndMoveToken(ctx, netId, placeId) {
 		//const transaction = ctx.contract.createTransaction('CreateToken');
 		//const resultBuffer = await transaction.submit(assetKey, {});
 		//const asset = resultBuffer.toString('utf8');
-		const asset = await submit(ctx, 'CreateToken', assetKey, {});
+		const asset = await submit(ctx, 'CreateToken', assetKey, "AUTH", null, null);
 		console.log(`${GREEN}<-- Submit CreateToken Result: committed, asset ${assetKey}${asset}${RESET}`);
 	} catch (createError) {
 		console.log(`${RED}<-- Submit Failed: CreateToken - ${createError}${RESET}`);
@@ -448,6 +453,32 @@ async function main() {
 			}
 
 
+			// temp
+			/*const keys = context.gateway.identity.credentials;
+			const jsonToken = {
+				hello: "world"
+			}
+
+			console.log(keys.certificate)
+
+			const jwToken = jwt.sign({
+                		payload: jsonToken
+        		}, keys.privateKey, { algorithm: 'RS256'})
+
+			console.log(jwToken);
+
+			const transaction = contract1Org.createTransaction('GetIdentity');
+			const resultBuffer = await transaction.submit(jwToken);
+			const asset = resultBuffer.toString('utf8');
+			console.log(asset);
+			const kkk = context.gateway.identity.credentials.certificate
+			console.log(kkk);
+
+			process.exit(0);*/
+
+			// end temp
+
+
 			
 			// Create place assets
 			const places = assets.places.map(async p => {
@@ -455,7 +486,7 @@ async function main() {
 					const assetKey = p.id;
 					console.log(`${GREEN}--> Submit Transaction: CreatePlace, ${assetKey}`);
 					const transaction = contract1Org.createTransaction('CreatePlace');
-					const resultBuffer = await transaction.submit(assetKey, JSON.stringify(p));
+					const resultBuffer = await transaction.submit(assetKey, p.type, JSON.stringify(p));
 					const asset = resultBuffer.toString('utf8');
 					console.log(`${GREEN}<-- Submit CreatePlace Result: committed, asset ${assetKey}${asset}${RESET}`);
 				} catch (createError) {
@@ -469,7 +500,7 @@ async function main() {
 					const assetKey = t.id;
 					console.log(`${GREEN}--> Submit Transaction: CreateToken, ${assetKey}`);
 					const transaction = contract1Org.createTransaction('CreateToken');
-					const resultBuffer = await transaction.submit(assetKey, JSON.stringify(t.color));
+					const resultBuffer = await transaction.submit(assetKey, t.type, JSON.stringify(t.data), t.owner);
 					const asset = resultBuffer.toString('utf8');
 					console.log(`${GREEN}<-- Submit CreateToken Result: committed, asset ${assetKey}${asset}${RESET}`);
 				} catch (createError) {
@@ -487,7 +518,7 @@ async function main() {
 					let asset;
 					if(t.action.type == "nl.dl4ld.function") {
 						transaction = contract1Org.createTransaction('CreateFunctionTransition');
-						resultBuffer = await transaction.submit(assetKey, t.action.functionName, "");
+						resultBuffer = await transaction.submit(assetKey, t.action.functionName, JSON.stringify(t.action.params));
 					}
 					if(t.action.type == "nl.dl4ld.webhook"){
 						transaction = contract1Org.createTransaction('CreateWebhookTransition');
@@ -756,8 +787,8 @@ async function main() {
 			});
 
 
-		} catch (createError) {
-			console.log(`${RED}<-- Submit Failed: CreatePlace - ${createError}${RESET}`);
+		} catch (err) {
+			console.log(err);
 		}
 		//domains.forEach(d => {
 		//	d.type = "domain"

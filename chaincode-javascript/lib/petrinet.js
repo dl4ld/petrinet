@@ -1,6 +1,7 @@
 'use strict';
 
 const { Contract } = require('fabric-contract-api');
+const jwt = require('jsonwebtoken');
 
 async function getAssetJSON(ctx, key) {
 	const asset = await ctx.stub.getState(key);
@@ -136,9 +137,9 @@ class Petrinet extends Contract {
 	    }
 
 	    // I can not do anything with others' tokens
-	    //if(token.owner != myOrgId) {
-	    //	throw new Error(`You do not own token ${tokenId}!`);
-	    //}
+	    if(token.status != "READY") {
+	    	throw new Error(`Token not in READY state ${tokenId}!`);
+	    }
 
 	    const firedTransitions = []
 	    // Check if token and place are owned by same org.
@@ -149,9 +150,14 @@ class Petrinet extends Contract {
 		    throw new Error(`Only place owner can put token in ${place.id}`);
 		}
 		// Place is not mine hence transfer token to place owner
-		token.owner = place.owner;
+		// token.owner = place.owner;
 		// Update token asset
-		await putAssetJSON(ctx, tokenKey, token)
+		// await putAssetJSON(ctx, tokenKey, token)
+	    }
+
+	    // Check for type match
+	    if(token.type != place.type) {
+		    throw new Error(`Place only accepts tokens of type ${place.type}`);
 	    }
 
 	    // Check if Place can accept tokens.
@@ -162,6 +168,10 @@ class Petrinet extends Contract {
 	    // Move token to place.
 	    place.tokens.push(token)
 	    await ctx.stub.putState(placeKey, Buffer.from(JSON.stringify(place)));
+	    token.status = "USED";
+	    // Update token asset
+	    await putAssetJSON(ctx, tokenKey, token)
+
 	    // Generate PutToken event
 	    const eventData = {
 		    net: netId,
@@ -283,6 +293,7 @@ class Petrinet extends Contract {
 			    effectedPlaces.push(place);
 	    		    await ctx.stub.putState(placeKey, Buffer.from(JSON.stringify(place)));
 		    })
+
 	    const outputPromises = getOutputsById(net, transitionId)
 	    		.filter(p => {return (p.type == 'place')})
 	    		.map(async p => {
@@ -640,6 +651,20 @@ class Petrinet extends Contract {
 	    return getAllResults(resultsIterator, false);
     }
 
+    async GetIdentity(ctx, s) {
+	    const k = ctx.clientIdentity.idBytes.toString('utf8')
+	    console.log("JWT: ", s)
+	    console.log("Cert: ",k);
+	    jwt.verify(s, k, function(err, decoded) {
+		    if(err) {
+			    console.log(err)
+			    return;
+		    }
+		    console.log("Decoded: ",decoded);
+	    });
+	    return k;
+    }
+
     async AcceptNet(ctx, netId) {
 	    const netKey = ctx.stub.createCompositeKey(this.name, ['net', netId])
 	    const net = await getAssetJSON(ctx, netKey)
@@ -658,14 +683,18 @@ class Petrinet extends Contract {
 	    return net
     }
 
-    async CreatePlace(ctx, placeId, details) {
+    async CreatePlace(ctx, placeId, type, details) {
 	    const key = ctx.stub.createCompositeKey(this.name, ['place', placeId])
 	    const config = (details) ? JSON.parse(details) : {}
+	    if(!type) {
+		    throw new Error(`Place must have a type.`);
+	    }
 	    const place = {
 		    id: placeId,
 		    issuer: ctx.clientIdentity.getID(),
 		    owner: ctx.clientIdentity.getMSPID(),
 		    tokens: [],
+		    type: type,
 		    isLocked: config.isLocked,
 		    status: "READY"
 	    }
@@ -682,13 +711,17 @@ class Petrinet extends Contract {
 	    return place.toString();
     }
     
-    async CreateToken(ctx, tokenId, color) {
+    async CreateToken(ctx, tokenId, type, data, owner) {
 	    const key = ctx.stub.createCompositeKey(this.name, ['token', tokenId])
+	    if(!type) {
+		    throw new Error(`Token must have a type.`)
+	    }
 	    const token = {
 		    id: tokenId,
 		    issuer: ctx.clientIdentity.getID(),
-		    owner: ctx.clientIdentity.getMSPID(),
-		    //color: JSON.parse(color),
+		    owner: owner || ctx.clientIdentity.getMSPID(),
+		    type: type, 
+		    data: data,
 		    status: "READY"
 	    }
             await ctx.stub.putState(key, Buffer.from(JSON.stringify(token)));
