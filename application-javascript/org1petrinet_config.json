@@ -2,6 +2,7 @@
 	"places": [
 		{"id": "P001", "isLocked": false, "type": "AUTH"},
 		{"id": "P011", "isLocked": false, "type": "DATA"},
+		{"id": "P021", "isLocked": false, "type": "START"},
 		{"id": "P002", "isLocked": false, "type": "AUTH"},
 		{"id": "P003", "isLocked": false, "type": "AUTH"},
 		{"id": "P004", "isLocked": false, "type": "AUTH"},
@@ -13,11 +14,11 @@
 		{"id": "P010", "isLocked": false, "type": "AUTH"}
 	],
 	"tokens": [
-		{ "id": "TK001", "data": {}, "owner": "Org1MSP", "type": "AUTH" },
-		{ "id": "TK002", "data": {}, "owner": "Org2MSP", "type": "AUTH" },
-		{ "id": "TK003", "data": {}, "owner": "Org3MSP", "type": "AUTH" },
-		{ "id": "TK055", "data": {"ips":["192.168.1.10"]}, "owner": "Org1MSP", "type": "DATA" },
-		{ "id": "TK004", "data": {}, "owner": "Org4MSP", "type": "AUTH" }
+		{ "id": "TKORG1", "data": {}, "owner": "Org1MSP", "type": "AUTH" },
+		{ "id": "TKORG2", "data": {}, "owner": "Org2MSP", "type": "AUTH" },
+		{ "id": "TKORG3", "data": {}, "owner": "Org3MSP", "type": "AUTH" },
+		{ "id": "TKDATA", "data": {"ips":["192.168.1.10"]}, "owner": "Org1MSP", "type": "DATA" },
+		{ "id": "TKASTART", "data": {}, "owner": "Org2MSP", "type": "START" }
 	],
 	"transitions": [
 		{ "id": "ddos_alert", "action": { "type": "nl.dl4ld.function", "functionName": "alert", "params":{} }},
@@ -25,6 +26,7 @@
 		{ "id": "as30r1", "action": { "type": "nl.dl4ld.function", "functionName": "block", "params": {"name":"as30r1"} }},
 		{ "id": "as100r1", "action": { "type": "nl.dl4ld.function", "functionName": "block", "params": {"name":"as100r1"} }},
 		{ "id": "as200r1", "action": { "type": "nl.dl4ld.function", "functionName": "block", "params": {"name":"as200r1"} }},
+		{ "id": "reset", "action": { "type": "nl.dl4ld.function", "functionName": "reset", "params": {"name":"N004"} }},
 		{ "id": "ddos_defense", "action": { "type": "nl.dl4ld.function", "functionName": "done", "params": {} }}
 	],
 	"nets": [
@@ -41,23 +43,22 @@
 			"arcs": [
 				{ "src": {"type": "place",	"id": "P001"}, "dst": { "type": "transition", "id": "ddos_alert"}},
 				{ "src": {"type": "place",	"id": "P011"}, "dst": { "type": "transition", "id": "ddos_alert"}},
+				{ "src": {"type": "place",	"id": "P021"}, "dst": { "type": "transition", "id": "ddos_alert"}},
 				{ "src": {"type": "transition",	"id": "ddos_alert"}, "dst": { "type": "place", "id": "P002"}},
 				{ "src": {"type": "transition",	"id": "ddos_alert"}, "dst": { "type": "place", "id": "P003"}},
 				{ "src": {"type": "transition",	"id": "ddos_alert"}, "dst": { "type": "place", "id": "P004"}},
-				{ "src": {"type": "transition",	"id": "ddos_alert"}, "dst": { "type": "place", "id": "P005"}},
 				{ "src": {"type": "place",	"id": "P002"}, "dst": { "type": "transition", "id": "as20r1"}},
 				{ "src": {"type": "place",	"id": "P003"}, "dst": { "type": "transition", "id": "as30r1"}},
 				{ "src": {"type": "place",	"id": "P004"}, "dst": { "type": "transition", "id": "as100r1"}},
-				{ "src": {"type": "place",	"id": "P005"}, "dst": { "type": "transition", "id": "as200r1"}},
 				{ "src": {"type": "transition",	"id": "as20r1"}, "dst": { "type": "place", "id": "P006"}},
 				{ "src": {"type": "transition",	"id": "as30r1"}, "dst": { "type": "place", "id": "P007"}},
 				{ "src": {"type": "transition",	"id": "as100r1"}, "dst": { "type": "place", "id": "P008"}},
-				{ "src": {"type": "transition",	"id": "as200r1"}, "dst": { "type": "place", "id": "P009"}},
 				{ "src": {"type": "place",	"id": "P006"}, "dst": { "type": "transition", "id": "ddos_defense"}},
 				{ "src": {"type": "place",	"id": "P007"}, "dst": { "type": "transition", "id": "ddos_defense"}},
 				{ "src": {"type": "place",	"id": "P008"}, "dst": { "type": "transition", "id": "ddos_defense"}},
-				{ "src": {"type": "place",	"id": "P009"}, "dst": { "type": "transition", "id": "ddos_defense"}},
-				{ "src": {"type": "transition",	"id": "ddos_defense"}, "dst": { "type": "place", "id": "P010"}}
+				{ "src": {"type": "transition",	"id": "ddos_defense"}, "dst": { "type": "place", "id": "P010"}},
+				{ "src": {"type": "place",	"id": "P010"}, "dst": { "type": "transition", "id": "reset"}},
+				{ "src": {"type": "transition",	"id": "reset"}, "dst": { "type": "place", "id": "P021"}}
 			]
 		},
 		{

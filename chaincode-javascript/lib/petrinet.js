@@ -126,6 +126,7 @@ class Petrinet extends Contract {
 	    const token = await getAssetJSON(ctx, tokenKey);
 	    const place = await getAssetJSON(ctx, placeKey);
 	    const net = await getAssetJSON(ctx, netKey);
+	    const events = [];
 	    if(!net || !token || !place) {
 		throw new Error(`Could not proceed with PutToken as an asset was not found!`);
 	    }
@@ -137,6 +138,10 @@ class Petrinet extends Contract {
 	    }
 
 	    // I can not do anything with others' tokens
+	    if(token.owner != myOrgId) {
+	    	throw new Error(`Token is not yours ${tokenId}!`);
+	    }
+	    // Check if token is in READY state
 	    if(token.status != "READY") {
 	    	throw new Error(`Token not in READY state ${tokenId}!`);
 	    }
@@ -178,8 +183,12 @@ class Petrinet extends Contract {
 		    place: placeId,
 		    token: tokenId,
 	    }
-	    const eventBuffer = Buffer.from(JSON.stringify(eventData));
-	    await ctx.stub.setEvent('PutToken', eventBuffer);
+	    events.push({
+		    type: 'PutToken',
+		    data: eventData
+	    })
+	    //const eventBuffer = Buffer.from(JSON.stringify(eventData));
+	    //await ctx.stub.setEvent('PutToken', eventBuffer);
 
 	    // Check for fired transitions with new token move
 	    const arcs = net.arcs.filter(arc => {
@@ -229,11 +238,18 @@ class Petrinet extends Contract {
 				transition.outputs = getOutputsById(net, transitionId);
 				transition.net = netId;
 				console.log("fire: ", transition)
-				const assetBuffer = Buffer.from(JSON.stringify(transition));
-				await ctx.stub.setEvent('Fire', assetBuffer);
+				events.push({
+					type: 'Fire',
+					data: transition
+				})
+				//const assetBuffer = Buffer.from(JSON.stringify(transition));
+				//await ctx.stub.setEvent('Fire', assetBuffer);
 			}
 		}
 	    }))
+	    
+	    const eventBuffer = Buffer.from(JSON.stringify(events));
+	    await ctx.stub.setEvent('PutRemoveTokens', eventBuffer);
 
 	    if(firedTransitions) {
 	    	//await ctx.stub.putState(netKey, Buffer.from(JSON.stringify(net)));
@@ -309,8 +325,8 @@ class Petrinet extends Contract {
 						    id: tokenId,
 						    issuer: ctx.clientIdentity.getID(),
 						    owner: ctx.clientIdentity.getMSPID(),
-						    //color: JSON.parse(color),
-						    status: "READY"
+						    type: place.type,
+						    status: "USED"
 					}
 
 					await ctx.stub.putState(key, Buffer.from(JSON.stringify(token)));

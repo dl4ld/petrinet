@@ -769,8 +769,9 @@ async function main() {
 
 			socket.on('PutToken', (data) => {
 				console.log(`event PutToken ${JSON.stringify(data)}`);
-				
-				async.retry({times:50, interval: 5000}, function(cb){
+				let errorMsg = ""
+
+				async.retry({times:1, interval: 5000}, function(cb){
 					console.log(`${GREEN}--> Submit Transaction: PutToken`);
 					const transaction = contract1Org.createTransaction('PutToken');
 					transaction.submit(data.token, data.net, data.place)
@@ -781,8 +782,14 @@ async function main() {
 						})
 						.catch(err => {
 							console.log(`${RED}<-- Submit Failed: PutToken - ${err}${RESET}`);
+							errorMsg = JSON.stringify(err.message);
 							cb(err, null);
 						});
+				}, function(err, results) {
+					if(err) {
+						console.log("Giving up retry!", err.message)
+						socket.emit("Error", errorMsg)
+					}
 				})
 			});
 
