@@ -18,7 +18,7 @@
 		{ "id": "TKORG2", "data": {}, "owner": "Org2MSP", "type": "AUTH" },
 		{ "id": "TKORG3", "data": {}, "owner": "Org3MSP", "type": "AUTH" },
 		{ "id": "TKDATA", "data": {"ips":["192.168.1.10"]}, "owner": "Org1MSP", "type": "DATA" },
-		{ "id": "TKASTART", "data": {}, "owner": "Org2MSP", "type": "START" }
+		{ "id": "TKASTART", "data": {}, "owner": "Everyone", "type": "START" }
 	],
 	"transitions": [
 		{ "id": "ddos_alert", "action": { "type": "nl.dl4ld.function", "functionName": "alert", "params":{} }},
@@ -53,12 +53,12 @@
 				{ "src": {"type": "transition",	"id": "as20r1"}, "dst": { "type": "place", "id": "P006"}},
 				{ "src": {"type": "transition",	"id": "as30r1"}, "dst": { "type": "place", "id": "P007"}},
 				{ "src": {"type": "transition",	"id": "as100r1"}, "dst": { "type": "place", "id": "P008"}},
+				{ "src": {"type": "transition",	"id": "reset"}, "dst": { "type": "place", "id": "P021"}},
+				{ "src": {"type": "place",	"id": "P010"}, "dst": { "type": "transition", "id": "reset"}},
 				{ "src": {"type": "place",	"id": "P006"}, "dst": { "type": "transition", "id": "ddos_defense"}},
 				{ "src": {"type": "place",	"id": "P007"}, "dst": { "type": "transition", "id": "ddos_defense"}},
 				{ "src": {"type": "place",	"id": "P008"}, "dst": { "type": "transition", "id": "ddos_defense"}},
-				{ "src": {"type": "transition",	"id": "ddos_defense"}, "dst": { "type": "place", "id": "P010"}},
-				{ "src": {"type": "place",	"id": "P010"}, "dst": { "type": "transition", "id": "reset"}},
-				{ "src": {"type": "transition",	"id": "reset"}, "dst": { "type": "place", "id": "P021"}}
+				{ "src": {"type": "transition",	"id": "ddos_defense"}, "dst": { "type": "place", "id": "P010"}}
 			]
 		},
 		{

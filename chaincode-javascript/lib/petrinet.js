@@ -138,7 +138,7 @@ class Petrinet extends Contract {
 	    }
 
 	    // I can not do anything with others' tokens
-	    if(token.owner != myOrgId) {
+	    if( (token.owner != myOrgId) && (token.owner != "Everyone") ) {
 	    	throw new Error(`Token is not yours ${tokenId}!`);
 	    }
 	    // Check if token is in READY state

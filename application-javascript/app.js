@@ -14,8 +14,8 @@ const fs = require('fs');
 const x509 = require('x509');
 const async = require('async');
 const commandLineArgs = require('command-line-args');
-const { buildCAClient, registerAndEnrollUser, enrollAdmin } = require('../../test-application/javascript/CAUtil.js');
-const AppUtils = require('../../test-application/javascript/AppUtil.js');
+const { buildCAClient, registerAndEnrollUser, enrollAdmin } = require('../../test-application3/javascript/CAUtil.js');
+const AppUtils = require('../../test-application3/javascript/AppUtil.js');
 
 
 const express = require('express');
@@ -766,6 +766,17 @@ async function main() {
 			eventEmitter.on("RemoveToken", (data) => {
 				socket.emit("RemoveToken", data)
 			});
+
+			socket.on('GetTokens', async () => {
+				// Get Tokens
+				console.log(`${GREEN}--> Submit Transaction: GetAllTokens`);
+				transaction = contract1Org.createTransaction('GetAllTokens');
+				resultBuffer = await transaction.submit();
+				const tokens = resultBuffer.toString('utf8');
+				//const JSONTokens = JSON.parse(transitions);
+				socket.emit('tokens', tokens);
+				console.log(`${GREEN}<-- Submit GetAllTokens Result: ${tokens}${RESET}`);
+			})
 
 			socket.on('PutToken', (data) => {
 				console.log(`event PutToken ${JSON.stringify(data)}`);
