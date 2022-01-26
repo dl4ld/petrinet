@@ -210,6 +210,10 @@
 						token: tokenId
 					})
 					console.log(`Cell: ${targetId}: ${JSON.stringify(p)}`)
+				} else {
+					if(!p) {
+						console.log(`Error find place  ${targetId}`)
+					}
 				}
 
 			}
@@ -324,6 +328,12 @@
 			}
 			document.getElementById(id).style.display = "block";
 			currentPaper = id;
+			const netId = id.replace("paper-","");
+			currentGraph = graphs[netId];
+			if(!currentGraph) {
+				console.log(`Could not load graph: ${netId}`)
+			}
+			console.log(`Graph changed to ${netId}`);
 		}
 
 		function displayNet(netId) {
@@ -337,6 +347,7 @@
 			var g = drawNet("paper-" + netId, netId);
 			graphs[netId] = g;
 			currentGraph = g;
+																													   console.log(`Current graph: ${netId}}`);
 			openTab("paper-" + netId)
 		}
 
@@ -366,10 +377,10 @@
 			paper.setAttribute("ondragover", "allowDrop(event)");
 			paper.id = "paper-" + netId;
 
-			const rightSideBar = createSideBar();
+			//const rightSideBar = createSideBar();
 
 			document.getElementById("main-panel").appendChild(paper);
-			document.getElementById("main-panel").appendChild(rightSideBar);
+			//document.getElementById("main-panel").appendChild(rightSideBar);
 			tabs.appendChild(tab);
 			return paper;
 		}
@@ -409,14 +420,15 @@
 		function addNode(graph, id, type, x, y) {
 			let node = null;
 			var pn = joint.shapes.pn;
-			var nodeId = graph.id + '-' + id
+			//var nodeId = graph.id + '-' + id
+			var nodeId =  id
 			if(type == 'place') {
 				node = new pn.Place({
 				    id: nodeId,
     				    position: { x: x, y: y },
 				    attrs: {
 					'.label': {
-					    'text': id,
+					    'text': nodeId,
 					    'fill': '#7c68fc' },
 					'.root': {
 					    'stroke': '#9586fd',
@@ -439,7 +451,7 @@
     				    position: { x: x, y: y },
 				    attrs: {
 					'.label': {
-					    'text': id,
+					    'text': nodeId,
 					    'fill': '#fe854f'
 					},
 					'.root': {
@@ -572,7 +584,7 @@
 			const cells = [];
 			const nodes = {};
 			
-			function createNode(id, type) {
+			function createNode(id, type, name) {
 				if(nodes[id]) {
 					return nodes[id]
 				}
@@ -582,7 +594,7 @@
 				    	    id: id,
 					    attrs: {
 						'.label': {
-						    'text': id,
+						    'text': name,
 						    'fill': '#7c68fc' },
 						'.root': {
 						    'stroke': '#9586fd',
@@ -601,7 +613,7 @@
 				    	    id: id,
 					    attrs: {
 						'.label': {
-						    'text': id,
+						    'text': name,
 						    'fill': '#fe854f'
 						},
 						'.root': {
@@ -621,8 +633,8 @@
 				net.arcs.forEach(function(a) {
 					const src = a.src;
 					const dst = a.dst;
-					const sNode = createNode(netId+'-'+src.id, src.type)
-					const dNode = createNode(netId+'-'+dst.id, dst.type)
+					const sNode = createNode(netId+'-'+src.id, src.type, netId+'-'+src.id)
+					const dNode = createNode(netId+'-'+dst.id, dst.type, netId+'-'+dst.id)
 					graph.addCell([sNode, dNode]);
 					graph.addCell([link(sNode,dNode)]);
 				})

@@ -172,8 +172,9 @@ class Petrinet extends Contract {
 
 	    // Move token to place.
 	    place.tokens.push(token)
+	    token.status = "USED"
+
 	    await ctx.stub.putState(placeKey, Buffer.from(JSON.stringify(place)));
-	    token.status = "USED";
 	    // Update token asset
 	    await putAssetJSON(ctx, tokenKey, token)
 
@@ -202,6 +203,7 @@ class Petrinet extends Contract {
 
 		let fire = true
 		const inputs = []
+		const inputPlacesAsAsset = []
 		await Promise.all(inputPlaces.map(async p => {
 			// Ignore the current place
 			if(p.src.id == placeId) {
@@ -216,6 +218,8 @@ class Petrinet extends Contract {
 			const i = JSON.parse(ir.toString())
 			if(i.tokens.length == 0) {
 				fire = false
+			} else {
+				inputPlacesAsAsset.push(i);
 			}
 		}))
 
@@ -233,10 +237,21 @@ class Petrinet extends Contract {
 
 				firedTransitions.push(transition)
 				transition.status = "FIRING"
+
+				// add input tokens to the firing transitions
+				// so we can pass data between transitions
+				let inputTokens = [];
+				inputPlacesAsAsset.forEach(p => {
+					inputTokens = inputTokens.concat(p.tokens);
+				})
+				inputTokens.push(token);
+
 	    			await ctx.stub.putState(k, Buffer.from(JSON.stringify(transition)));
 				//net.states[transition.id] = "FIRING"
 				transition.outputs = getOutputsById(net, transitionId);
 				transition.net = netId;
+				transition.inputPlaces = inputPlacesAsAsset;
+				transition.inputTokens = inputTokens;
 				console.log("fire: ", transition)
 				events.push({
 					type: 'Fire',
@@ -264,7 +279,7 @@ class Petrinet extends Contract {
 	    }
     }
 
-    async CompleteTransition(ctx, netId, transitionId, tokenIds) {
+    async CompleteTransition(ctx, netId, transitionId, tokenIds, transitionOutputData) {
 	    const that = this;
 	    const myOrgId = ctx.clientIdentity.getMSPID();
 	    const netKey = ctx.stub.createCompositeKey(this.name, ['net', netId]);
@@ -326,6 +341,7 @@ class Petrinet extends Contract {
 						    issuer: ctx.clientIdentity.getID(),
 						    owner: ctx.clientIdentity.getMSPID(),
 						    type: place.type,
+						    data: transitionOutputData,
 						    status: "USED"
 					}
 
@@ -380,8 +396,12 @@ class Petrinet extends Contract {
 										const transitionKey = ctx.stub.createCompositeKey(that.name, ['transition', t.id]);
 										const transition = getAssetJSON(ctx, transitionKey)
 										.then(transition => {
+											const inputTokens = [].concat.apply([], ips.map(p => p.tokens) )
 											transition.outputs = getOutputsById(net, t.id);
 											transition.net = net.id;
+											transition.inputPlaces = ips;
+											transition.inputTokens = inputTokens;
+
 											events.push({
 												type: "Fire",
 												data: transition

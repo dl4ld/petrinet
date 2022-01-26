@@ -261,13 +261,13 @@ function showTransactionData(transactionData) {
 	}
 }
 
-async function completeTransition(ctx, netId, transitionId, tokenIds) {
+async function completeTransition(ctx, netId, transitionId, tokenIds, outputData) {
 	try {
 		console.log(`${GREEN}--> Submit Transaction: CompleteTransition, ${transitionId}, ${netId} with output tokens ${tokenIds}`);
 		//const transaction = ctx.contract.createTransaction('CompleteTransition');
 		//const resultBuffer = await transaction.submit(netId, transitionId);
 		//const result = resultBuffer.toString('utf8');
-		const result = await submit(ctx, 'CompleteTransition', netId, transitionId, JSON.stringify(tokenIds));
+		const result = await submit(ctx, 'CompleteTransition', netId, transitionId, JSON.stringify(tokenIds), JSON.stringify(outputData));
 		console.log(`${GREEN}<-- Submit CompleteTransaction Result: committed ${JSON.stringify(result)}`);
 	} catch (createError) {
 		console.log(`${RED}<-- Submit Failed: CompleteTransition - ${createError}${RESET}`);
@@ -389,15 +389,16 @@ function eventHandler(ctx, event) {
 					if(handler) {
 						console.log(`${GREEN}--> Calling transition handler for ${asset.action.type}${RESET}`);
 						handler(ctx, event)
-							.then(async ()=>{
+							.then(async (outputData)=>{
 								console.log(`${GREEN}<-- Finished transition handler for ${asset.action.type}${RESET}`);
 								const tokenIds = asset.outputs.map(o => {
 									return 'TK' + (Math.floor(Math.random() * 999) + 1);
 								})
+								console.log("outputData: ", outputData);
 								queue.push({
 									name: `completeTransition ${asset.id}`,
 									f: completeTransition,
-									params: [ctx, asset.net, asset.id, tokenIds]
+									params: [ctx, asset.net, asset.id, tokenIds, outputData]
 								}, (err, result) => {
 									if(err) {
 										console.log(err);
@@ -500,7 +501,8 @@ async function main() {
 					const assetKey = t.id;
 					console.log(`${GREEN}--> Submit Transaction: CreateToken, ${assetKey}`);
 					const transaction = contract1Org.createTransaction('CreateToken');
-					const resultBuffer = await transaction.submit(assetKey, t.type, JSON.stringify(t.data), t.owner);
+					//const resultBuffer = await transaction.submit(assetKey, t.type, JSON.stringify(t.data), t.owner);
+					const resultBuffer = await transaction.submit(assetKey, t.type, t.data, t.owner);
 					const asset = resultBuffer.toString('utf8');
 					console.log(`${GREEN}<-- Submit CreateToken Result: committed, asset ${assetKey}${asset}${RESET}`);
 				} catch (createError) {
