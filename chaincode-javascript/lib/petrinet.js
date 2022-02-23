@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 async function getAssetJSON(ctx, key) {
 	const asset = await ctx.stub.getState(key);
 	if(!asset || asset.length === 0) {
-		return {}
+		return null;
 	}
 	return JSON.parse(asset.toString())
 }
@@ -186,7 +186,8 @@ class Petrinet extends Contract {
 	    }
 	    events.push({
 		    type: 'PutToken',
-		    data: eventData
+		    data: eventData,
+		    owner: myOrgId
 	    })
 	    //const eventBuffer = Buffer.from(JSON.stringify(eventData));
 	    //await ctx.stub.setEvent('PutToken', eventBuffer);
@@ -255,7 +256,8 @@ class Petrinet extends Contract {
 				console.log("fire: ", transition)
 				events.push({
 					type: 'Fire',
-					data: transition
+					data: transition,
+					owner: myOrgId
 				})
 				//const assetBuffer = Buffer.from(JSON.stringify(transition));
 				//await ctx.stub.setEvent('Fire', assetBuffer);
@@ -301,9 +303,9 @@ class Petrinet extends Contract {
 
 			    const placeKey = ctx.stub.createCompositeKey(this.name, ['place', p.id]);
 			    const place = await getAssetJSON(ctx, placeKey);
-			    if(place.owner != myOrgId) {
-				    throw new Error(`You do not own place.`);
-			    }
+			    //if(place.owner != myOrgId) {
+				//    throw new Error(`You do not own place.`);
+			    //}
 			    console.log(`CompleteTransaction ${JSON.stringify(place)}`);
 			    const token = place.tokens.pop();
 			    if(token) {
@@ -316,7 +318,8 @@ class Petrinet extends Contract {
 				    const eventBuffer = Buffer.from(JSON.stringify(eventData));
 				    events.push({
 					    type: 'RemoveToken',
-					    data: eventData
+					    data: eventData,
+					    owner: myOrgId
 				    })
 			            //await ctx.stub.setEvent('RemoveToken', eventBuffer);
 			    }
@@ -360,7 +363,8 @@ class Petrinet extends Contract {
 					const eventBuffer = Buffer.from(JSON.stringify(eventData));
 					events.push({
 						    type: 'PutToken',
-						    data: eventData
+						    data: eventData,
+						    owner: myOrgId
 					})
 
 					//await ctx.stub.setEvent('PutToken', eventBuffer);
@@ -404,7 +408,8 @@ class Petrinet extends Contract {
 
 											events.push({
 												type: "Fire",
-												data: transition
+												data: transition,
+												owner: myOrgId
 											})
 											console.log(`Transition ${t.id} WILL fire!`);
 											console.log(transition)
@@ -471,6 +476,14 @@ class Petrinet extends Contract {
 	    }
 	    transition.status = "READY"
 	    await ctx.stub.putState(transitionKey, Buffer.from(JSON.stringify(transition)));
+	    events.push({
+		    type: "CompleteTransition",
+		    data: {
+			    transitionId: transitionId,
+			    netId: netId
+		    },
+		    owner: myOrgId
+	    })
 	    const eventBuffer = Buffer.from(JSON.stringify(events));
 	    await ctx.stub.setEvent('PutRemoveTokens', eventBuffer);
 	    console.log(`New events ${JSON.stringify(events)}`)
@@ -523,6 +536,7 @@ class Petrinet extends Contract {
 		    arcs: [],
 		    domains: {},
 		    k: config.k || 1,
+		    statements: config.statements || [],
 		    status: "NEW"
 	    }
 	    /*
@@ -638,7 +652,6 @@ class Petrinet extends Contract {
 		//asset.arcs = arcs
 		asset.domains[asset.owner] = { status: "Accepted" }
 		if(Object.values(asset.domains).every(d => { return (d.status ==  "Accepted") }) ) {
-			console.log("HERE1")
 			asset.status = "ACTIVE"
 			console.log("asset key: ", key)
 			await ctx.stub.putState(key, Buffer.from(JSON.stringify(asset)));
@@ -646,7 +659,6 @@ class Petrinet extends Contract {
 			await ctx.stub.setEvent('NewNet', assetBuffer);
 			return asset;
 		} else {
-			console.log("HERE2")
 			console.log("asset key: ", key)
 			await ctx.stub.putState(key, Buffer.from(JSON.stringify(asset)));
 			const assetBuffer = Buffer.from(JSON.stringify(asset));
@@ -791,6 +803,10 @@ class Petrinet extends Contract {
 
     async CreateTransition(ctx, transitionId, functionURI) {
 	    const key = ctx.stub.createCompositeKey(this.name, ['transition', transitionId])
+	    const t = await getAssetJSON(ctx, key)
+	    if(t) {
+		    return t;
+	    }
 	    const transition = {
 		    id: transitionId,
 		    issuer: ctx.clientIdentity.getID(),
@@ -807,6 +823,10 @@ class Petrinet extends Contract {
     
     async CreateWebhookTransition(ctx, transitionId, webhookURI, headers) {
 	    const key = ctx.stub.createCompositeKey(this.name, ['transition', transitionId])
+	    const t = await getAssetJSON(ctx, key)
+	    if(t) {
+		    return t;
+	    }
 	    const transition = {
 		    id: transitionId,
 		    issuer: ctx.clientIdentity.getID(),
@@ -824,6 +844,10 @@ class Petrinet extends Contract {
     
     async CreateFunctionTransition(ctx, transitionId, functionName, params) {
 	    const key = ctx.stub.createCompositeKey(this.name, ['transition', transitionId])
+	    const t = await getAssetJSON(ctx, key)
+	    if(t) {
+		    return t;
+	    }
 	    const transition = {
 		    id: transitionId,
 		    issuer: ctx.clientIdentity.getID(),

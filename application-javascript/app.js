@@ -263,7 +263,7 @@ function showTransactionData(transactionData) {
 
 async function completeTransition(ctx, netId, transitionId, tokenIds, outputData) {
 	try {
-		console.log(`${GREEN}--> Submit Transaction: CompleteTransition, ${transitionId}, ${netId} with output tokens ${tokenIds}`);
+		console.log(`${GREEN}--> Submit Transaction: completeTransition, ${transitionId}, ${netId} with output tokens ${tokenIds}`);
 		//const transaction = ctx.contract.createTransaction('CompleteTransition');
 		//const resultBuffer = await transaction.submit(netId, transitionId);
 		//const result = resultBuffer.toString('utf8');
@@ -327,9 +327,10 @@ async function handleNewNet(ctx, event) {
 		// accept net
 		try {
 			console.log(`${GREEN}--> Submit Transaction: AcceptNet, ${net.id}`);
-			const transaction = ctx.contract.createTransaction('AcceptNet');
-			const resultBuffer = await transaction.submit(net.id);
-			const acceptedNet = JSON.parse(resultBuffer.toString('utf8'));
+			//const transaction = ctx.contract.createTransaction('AcceptNet');
+			//const resultBuffer = await transaction.submit(net.id);
+			const resultBuffer = await submit(ctx, 'AcceptNet', net.id);
+			const acceptedNet = resultBuffer.toString('utf8');
 			console.log(acceptedNet);
 			console.log(`${GREEN}<-- Submit AcceptNet Result: committed, asset ${net.id}${RESET}`);
 		} catch (createError) {
@@ -340,8 +341,8 @@ async function handleNewNet(ctx, event) {
 }
 
 function submit(ctx, name, ...args) {
-	const transaction = ctx.contract.createTransaction(name);
 	return async.retry({times:50, interval: 5000}, function(cb){
+		const transaction = ctx.contract.createTransaction(name);
 		transaction.submit(...args)
 		.then(response => {
 			cb(null, JSON.parse(response.toString('utf8')));
@@ -368,9 +369,13 @@ function eventHandler(ctx, event) {
 						}
 						eventHandler(ctx, fireEvent)
 					} else {
+						e.data.owner = e.owner;
 						eventEmitter.emit(e.type, e.data)
 					}
 				});
+				break;
+			case "CompleteTransition":
+				eventEmitter.emit('CompleteTransition', asset);
 				break;
 			case "PutToken":
 				eventEmitter.emit('PutToken', asset);
@@ -552,7 +557,8 @@ async function main() {
 						//	return
 						//}
 						const details = {
-							k: n.config.k
+							k: n.config.k,
+							statements: n.statements
 						}
 						console.log(`${GREEN}--> Submit Net: CreateNet, ${assetKey} ${JSON.stringify(n)}`);
 						const transaction = contract1Org.createTransaction('CreateNet');
@@ -721,6 +727,7 @@ async function main() {
 			// Send identity
 			const str = context.gateway.identity.credentials.certificate;
 			const cert = x509.parseCert(context.gateway.identity.credentials.certificate);
+			cert.orgMSP = orgMSP;
 			socket.emit("identity", JSON.stringify(cert));
 
 			// Get Nets
@@ -768,6 +775,9 @@ async function main() {
 			eventEmitter.on("RemoveToken", (data) => {
 				socket.emit("RemoveToken", data)
 			});
+			eventEmitter.on("CompleteTransition", (data) => {
+				socket.emit("CompleteTransition", data)
+			})
 
 			socket.on('GetTokens', async () => {
 				// Get Tokens

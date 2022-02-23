@@ -74,7 +74,7 @@
     </head>
     <body>
 	 <div class="w3-container w3-teal">
-  		<h1>Petrinet Contracts</h1>
+  		<h1 id="title">Petrinet Contracts</h1>
 	</div>
 	<div class="w3-sidebar w3-bar-block" style="width:15%">
 	  <a href="#" class="w3-bar-item w3-button" onclick="showModal('x509'); return true;">My Info</a>
@@ -191,6 +191,7 @@
 			const id = ev.dataTransfer.getData("nodeId");
 			const type = ev.dataTransfer.getData("nodeType");
 			if(type == 'net') {
+
 				console.log(`Drop net: ${id}`);
 				addNet(currentGraph, id, ev.layerX, ev.layerY);
 			}
@@ -300,6 +301,53 @@
 		    }
 		    return retValue;
 		}
+		function createStatements(net) {
+			const el = document.getElementById(net.id +"-statements");
+
+			if(el) {
+				return el
+			}
+
+		    const table = document.createElement("TABLE");
+			table.className += "w3-table w3-border w3-bordered";
+			let domains = ""
+			Object.keys(net.domains).forEach(function(k){
+				domains += "<th>" + k + "</th>"
+			})
+			let rows = "<tr><th>Statement</th>" + domains + "</tr>";
+			net.statements.unshift({
+								  id:"statement00",
+								  description:"Petrinet accepted by organization.",
+								  transitions: []
+								  })
+			net.statements.forEach(function(s){
+				rows += "<tr>"
+				rows += "<th>"+s.description+"</th>"
+				Object.keys(net.domains).forEach(function(k){
+					const id = s.id + "-" + k;
+					let c = "w3-gray"
+					rows += `<th id=${id} class="${c}"></th>`;
+				})
+				rows += "</tr>"
+
+			})
+			table.innerHTML = rows;
+
+			const wrapper = document.createElement("DIV");
+			wrapper.className += " w3-display-bottomright ";
+			wrapper.id = net.id + "-statements";
+			wrapper.appendChild(table);
+			document.body.appendChild(wrapper);
+			Object.keys(net.domains).forEach(function(k){
+				const status = net.domains[k]["status"]
+				if(status == "Accepted") {
+					const el = document.getElementById("statement00-"+k)
+					el.className = "w3-green";
+				}
+			})
+			return wrapper;
+		}
+
 
 		function createModal(id, title, data) {
 			const wrapper = document.createElement("DIV");
@@ -330,10 +378,15 @@
 			currentPaper = id;
 			const netId = id.replace("paper-","");
 			currentGraph = graphs[netId];
+																											    currentNet = db.nets[netId];
 			if(!currentGraph) {
 				console.log(`Could not load graph: ${netId}`)
 			}
 			console.log(`Graph changed to ${netId}`);
+																											   console.log(currentNet); 
+																																																				   const el = createStatements(currentNet);
+		   el.display = "BLOCK";																																																		   	
+
 		}
 
 		function displayNet(netId) {
@@ -349,6 +402,7 @@
 			currentGraph = g;
 																													   console.log(`Current graph: ${netId}}`);
 			openTab("paper-" + netId)
+
 		}
 
 
@@ -727,6 +781,20 @@
 		// open web socket
                 socket = io()
                 socket.emit('ready', '');
+		socket.on('CompleteTransition', function(data) {
+			console.log("completetransition> ", data)
+			const net = db.nets[data.netId];
+			const org = data.owner;
+			const statments = net.statements.filter(function(s){
+				console.log(s);
+				return(s.transitions.includes(data.transitionId))
+			}).forEach(function(s){
+				const el = document.getElementById(s.id +"-"+data.owner)
+				el.className = "w3-green"
+			})
+
+
+		})
 		socket.on('PutToken', function(data) {
 			console.log("puttoken> ", data)
 			addToken(data.net, data.place, data.token)
@@ -737,7 +805,12 @@
 		})
 		socket.on('identity', function(data) {
 			console.log("identity> ", data)
-			createModal('x509', 'My Identity', JSON.parse(data));
+			const d = JSON.parse(data);
+			const t = document.getElementById("title");
+			//t.innerHTML = t.innerHTML + " - " + d.issuer.organizationName;
+			t.innerHTML = t.innerHTML + " - " + d.orgMSP;
+			db.myInfo = d;
+			createModal('x509', 'My Identity', d);
 		})
 
 		socket.on('Error', function(data) {
@@ -750,7 +823,7 @@
 			const tokens = JSON.parse(data);
 			tokens.map(function(t){ return t.Record;})
 			    	.filter(function(t){
-					return(t.status == "READY")
+					return((t.status == "READY") && ((t.owner == db.myInfo.orgMSP) || (t.owner == "Everyone")))
 				})
 				.forEach(function(t){
 					if(isNew('tokens', t.id)) {
@@ -767,6 +840,9 @@
 			places.map(function(p) {
 				return p.Record;
 				})
+				.filter(function(p) {
+					return(p.owner == db.myInfo.orgMSP || p.owner == "Everyone")
+				})
 				.forEach(function(p){
 					if(isNew("places", p.id)) {
 						db.places[p.id] = p;
@@ -780,6 +856,9 @@
                 	console.log("transitions> ", data);
 			const transitions = JSON.parse(data);
 			transitions.map(function(t) { return t.Record; })
+				.filter(function(t) {
+					return(t.owner == db.myInfo.orgMSP || t.owner == "Everyone")
+				})
 				.forEach(function(t) {
 					if(isNew("transitions", t.id)) {
 						db.transitions[t.id] = t;
