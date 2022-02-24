@@ -309,7 +309,7 @@
 			}
 
 		    const table = document.createElement("TABLE");
-			table.className += "w3-table w3-border w3-bordered";
+			table.className += "w3-table-all w3-border w3-bordered";
 			let domains = ""
 			Object.keys(net.domains).forEach(function(k){
 				domains += "<th>" + k + "</th>"
@@ -322,11 +322,11 @@
 								  })
 			net.statements.forEach(function(s){
 				rows += "<tr>"
-				rows += "<th>"+s.description+"</th>"
+				rows += "<td>"+s.description+"</td>"
 				Object.keys(net.domains).forEach(function(k){
 					const id = s.id + "-" + k;
 					let c = "w3-gray"
-					rows += `<th id=${id} class="${c}"></th>`;
+					rows += `<td id=${id} class="${c}"></td>`;
 				})
 				rows += "</tr>"
 

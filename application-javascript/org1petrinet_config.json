@@ -15,14 +15,9 @@
 		{"id": "P010", "isLocked": false, "type": "DATA"}
 	],
 	"tokens": [
-		{ "id": "ORG1_AUTH_1", "data": {}, "owner": "Org1MSP", "type": "AUTH" },
-		{ "id": "ORG1_AUTH_2", "data": {}, "owner": "Org1MSP", "type": "AUTH" },
-		{ "id": "ORG2_AUTH_1", "data": {}, "owner": "Org2MSP", "type": "AUTH" },
-		{ "id": "ORG3_AUTH_1", "data": {}, "owner": "Org3MSP", "type": "AUTH" },
+		{ "id": "ORG1_AUTH", "data": {}, "owner": "Org1MSP", "type": "AUTH" },
 		{ "id": "IP_TO_BLOCK", "data": "200.2.0.2", "owner": "Org1MSP", "type": "DATA" },
-		{ "id": "IP_TO_UNBLOCK", "data": "200.2.0.2", "owner": "Org1MSP", "type": "DATA" },
-		{ "id": "START", "data": {}, "owner": "Everyone", "type": "START" },
-		{ "id": "START2", "data": {}, "owner": "Everyone", "type": "START" }
+		{ "id": "START", "data": {}, "owner": "Everyone", "type": "START" }
 	],
 	"transitions": [
 		{ "id": "ddos_alert", "action": { "type": "nl.dl4ld.function", "functionName": "alert", "params":{} }},
@@ -74,17 +69,18 @@
 				{ "id": 22, "src": {"type": "transition",	"id": "ddos_defense"}, "dst": { "type": "place", "id": "P010"}}
 			],
 			"statements": [
-				{ "id": "statement01", "description": "If DDOS dedected then alert Org1MSP, Org2MSP, Org3MSP.", "transitions": ["ddos_alert"] },
-				{ "id": "statement02", "description": "On alert, Org1MSP must blocks IPs on router AS100R1.", "transitions": ["as100r1_b"] },
-				{ "id": "statement03", "description": "On alert, Org2MSP must blocks IPs on router AS200R1.", "transitions": ["as200r1_b"] },
-				{ "id": "statement04", "description": "On alert, Org3MSP must blocks IPs on router AS20R1.", "transitions": ["as20r1_b"] },
-				{ "id": "statement05", "description": "On alert, Org1MSP must blocks IPs on router AS30R1.", "transitions": ["as30r1_b"] },
+				{ "id": "statement01", "description": "If DOS detected then alert Org1MSP, Org2MSP, Org3MSP.", "transitions": ["ddos_alert"] },
+				{ "id": "statement02", "description": "On alert, Org1MSP must block IPs on router AS100R1.", "transitions": ["as100r1_b"] },
+				{ "id": "statement03", "description": "On alert, Org2MSP must block IPs on router AS200R1.", "transitions": ["as200r1_b"] },
+				{ "id": "statement04", "description": "On alert, Org3MSP must block IPs on router AS20R1.", "transitions": ["as20r1_b"] },
+				{ "id": "statement05", "description": "On alert, Org3MSP must block IPs on router AS30R1.", "transitions": ["as30r1_b"] },
 				{ "id": "statement06", "description": "If Org1MSP, Org2MSP, Org3MSP perform action then agreement is complete.", "transitions": ["reset"] }
 			]
 		},
 		{
 			"id": "UNBLOCK",
 			"admin": "Org1MSP",
+			"disabled": true,
 			"config": {
 				"k": 1,
 				"type": "workflow",
