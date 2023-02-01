@@ -785,7 +785,7 @@
 			console.log("completetransition> ", data)
 			const net = db.nets[data.netId];
 			const org = data.owner;
-      const statments = net.statements.filter(function(e){
+      const statments = net.statements.filter(function(s){
         return(s.transitions)
       }).filter(function(s){
 				return(s.transitions.includes(data.transitionId))
