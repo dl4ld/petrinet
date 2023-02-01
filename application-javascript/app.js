@@ -368,6 +368,7 @@ function eventHandler(ctx, event) {
 							payload: JSON.stringify(e.data),
               owner: e.owner
 						}
+            eventEmitter.emit("Fire", fireEvent)
 						eventHandler(ctx, fireEvent)
 					} else {
 						e.data.owner = e.owner;
@@ -778,6 +779,9 @@ async function main() {
 			});
 			eventEmitter.on("CompleteTransition", (data) => {
 				socket.emit("CompleteTransition", data)
+			})
+			eventEmitter.on("Fire", (data) => {
+				socket.emit("Fire", data)
 			})
 
 			socket.on('GetTokens', async () => {
