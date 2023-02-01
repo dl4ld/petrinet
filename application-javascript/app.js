@@ -357,6 +357,7 @@ function submit(ctx, name, ...args) {
 function eventHandler(ctx, event) {
 	try {
 		const asset = JSON.parse(event.payload.toString('utf8'));
+    console.log("Event details: ", event)
 		switch  (event.eventName) {
 			case "PutRemoveTokens":
 				console.log(asset);
