@@ -67,7 +67,7 @@
 				{ "id": "statement03", "description": "On alert, Org2MSP must block IPs on router AS200R1.", "transitions": ["as200r1_b"] },
 				{ "id": "statement04", "description": "On alert, Org3MSP must block IPs on router AS20R1.", "transitions": ["as20r1_b"] },
 				{ "id": "statement05", "description": "On alert, Org3MSP must block IPs on router AS30R1.", "transitions": ["as30r1_b"] },
-				{ "id": "statement06", "description": "If Org1MSP, Org2MSP, Org3MSP perform action then agreement is complete.", "transitions": ["ddos_defense"] }
+				{ "id": "statement06", "description": "If Org1MSP, Org2MSP, Org3MSP perform action then agreement is complete.", "firings": ["ddos_defense"] }
 			]
 		},
 		{
