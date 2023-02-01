@@ -357,16 +357,16 @@ function submit(ctx, name, ...args) {
 function eventHandler(ctx, event) {
 	try {
 		const asset = JSON.parse(event.payload.toString('utf8'));
-    asset.eventOwner = event.owner;
-    console.log("Event details: ", event)
+    asset.eventOwner = event.owner
 		switch  (event.eventName) {
 			case "PutRemoveTokens":
 				asset.forEach(e => {
+        console.log("Event details: ", e)
 					if(e.type == "Fire") {
 						const fireEvent = {
 							eventName: "Fire",
 							payload: JSON.stringify(e.data),
-              owner: event.owner
+              owner: e.owner
 						}
 						eventHandler(ctx, fireEvent)
 					} else {
