@@ -799,7 +799,7 @@
       const payload = JSON.parse(data.payload);
       const transitionId = payload.id;
       const net = db.nets[payload.net];
-      const statments = net.statements.filter(function(e){
+      const statments = net.statements.filter(function(s){
         return(s.firings)
       }).filter(function(s){
 				return(s.firings.includes(transitionId))
