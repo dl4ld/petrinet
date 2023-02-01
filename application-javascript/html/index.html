@@ -792,9 +792,10 @@
 				const el = document.getElementById(s.id +"-"+data.owner)
 				el.className = "w3-green"
 			})
-
-
 		})
+    socket.on('Fire', function(data) {
+      console.log("fire> ", data)
+    })
 		socket.on('PutToken', function(data) {
 			console.log("puttoken> ", data)
 			addToken(data.net, data.place, data.token)
