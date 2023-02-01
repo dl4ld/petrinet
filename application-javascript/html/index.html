@@ -785,8 +785,9 @@
 			console.log("completetransition> ", data)
 			const net = db.nets[data.netId];
 			const org = data.owner;
-			const statments = net.statements.filter(function(s){
-				console.log(s);
+      const statments = net.statements.filter(function(e){
+        return(s.transitions)
+      }).filter(function(s){
 				return(s.transitions.includes(data.transitionId))
 			}).forEach(function(s){
 				const el = document.getElementById(s.id +"-"+data.owner)
@@ -795,6 +796,17 @@
 		})
     socket.on('Fire', function(data) {
       console.log("fire> ", data)
+      const payload = JSON.parse(data.payload);
+      const transitionId = payload.id;
+      const net = db.nets[payload.net];
+      const statments = net.statements.filter(function(e){
+        return(s.firings)
+      }).filter(function(s){
+				return(s.firings.includes(transitionId))
+			}).forEach(function(s){
+				const el = document.getElementById(s.id +"-"+data.owner)
+				el.className = "w3-green"
+			})
     })
 		socket.on('PutToken', function(data) {
 			console.log("puttoken> ", data)

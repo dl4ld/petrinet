@@ -43,7 +43,7 @@
 				{ "id": 22, "src": {"type": "transition",	"id": "ddos_defense"}, "dst": { "type": "place", "id": "P010"}}
 			],
 			"statements": [
-				{ "id": "statement01", "description": "If DDOS dedected then alert Org1MSP, Org2MSP, Org3MSP.", "transitions": ["ddos_alert"] },
+				{ "id": "statement01", "description": "If DDOS dedected then alert Org1MSP, Org2MSP, Org3MSP.", "firings": ["ddos_alert"] },
 				{ "id": "statement02", "description": "On alert, Org1MSP must blocks IPs on router AS100R1.", "transitions": ["as100r1_b"] },
 				{ "id": "statement03", "description": "On alert, Org2MSP must blocks IPs on router AS200R1.", "transitions": ["as200r1_b"] },
 				{ "id": "statement04", "description": "On alert, Org3MSP must blocks IPs on router AS20R1.", "transitions": ["as20r1_b"] },
