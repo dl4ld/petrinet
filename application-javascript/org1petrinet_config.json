@@ -37,7 +37,10 @@
 			"parties": ["Org1MSP", "Org2MSP", "Org3MSP"],
 			"config": {
 				"k": 1,
-				"type": "workflow"
+				"type": "workflow",
+				"startPlace": "P010",
+				"endPlace": "TOKEN",
+				"resetOnEnd": true
 			},
       "arcs": [
 				{ "id": 22, "src": {"type": "place",	"id": "P010"}, "dst": { "type": "transition", "id": "token_gen"}},
