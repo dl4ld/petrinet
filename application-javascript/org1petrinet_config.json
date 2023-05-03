@@ -11,6 +11,7 @@
 		{"id": "P008", "isLocked": false, "type": "DATA"},
 		{"id": "P009", "isLocked": false, "type": "DATA"},
 		{"id": "P010", "isLocked": false, "type": "DATA"},
+		{"id": "P011", "isLocked": false, "type": "DATA"},
 		{"id": "TOKEN", "isLocked": false, "type": "DATA"}
 	],
 	"tokens": [
@@ -38,12 +39,12 @@
 			"config": {
 				"k": 1,
 				"type": "workflow",
-				"startPlace": "P010",
+				"startPlace": "P011",
 				"endPlace": "TOKEN",
 				"resetOnEnd": true
 			},
       "arcs": [
-				{ "id": 22, "src": {"type": "place",	"id": "P010"}, "dst": { "type": "transition", "id": "token_gen"}},
+				{ "id": 22, "src": {"type": "place",	"id": "P011"}, "dst": { "type": "transition", "id": "token_gen"}},
 				{ "id": 24, "src": {"type": "transition",	"id": "token_gen"}, "dst": { "type": "place", "id": "TOKEN"}}
       ]
     },
