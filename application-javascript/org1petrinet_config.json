@@ -44,8 +44,7 @@
 			},
       "arcs": [
 				{ "id": 22, "src": {"type": "place",	"id": "P010"}, "dst": { "type": "transition", "id": "token_gen"}},
-				{ "id": 24, "src": {"type": "transition",	"id": "token_gen"}, "dst": { "type": "place", "id": "TOKEN"}},
-        {}
+				{ "id": 24, "src": {"type": "transition",	"id": "token_gen"}, "dst": { "type": "place", "id": "TOKEN"}}
       ]
     },
 		{
