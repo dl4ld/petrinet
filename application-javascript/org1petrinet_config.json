@@ -6,13 +6,18 @@
 		{"id": "P003", "isLocked": false, "type": "DATA"},
 		{"id": "P004", "isLocked": false, "type": "DATA"},
 		{"id": "P005", "isLocked": false, "type": "DATA"},
-		{"id": "P006", "isLocked": false, "type": "DATA"},
-		{"id": "P007", "isLocked": false, "type": "DATA"},
-		{"id": "P008", "isLocked": false, "type": "DATA"},
-		{"id": "P009", "isLocked": false, "type": "DATA"},
-		{"id": "P010", "isLocked": false, "type": "DATA"},
-		{"id": "P011", "isLocked": false, "type": "DATA"},
-		{"id": "TOKEN", "isLocked": false, "type": "DATA"}
+		{"id": "V011", "isLocked": false, "type": "DATA"},
+		{"id": "V012", "isLocked": false, "type": "DATA"},
+		{"id": "V021", "isLocked": false, "type": "DATA"},
+		{"id": "V022", "isLocked": false, "type": "DATA"},
+		{"id": "V031", "isLocked": false, "type": "DATA"},
+		{"id": "V032", "isLocked": false, "type": "DATA"},
+		{"id": "V041", "isLocked": false, "type": "DATA"},
+		{"id": "V042", "isLocked": false, "type": "DATA"},
+		{"id": "T001", "isLocked": false, "type": "DATA"},
+		{"id": "T002", "isLocked": false, "type": "DATA"},
+		{"id": "T003", "isLocked": false, "type": "DATA"},
+		{"id": "T004", "isLocked": false, "type": "DATA"}
 	],
 	"tokens": [
 		{ "id": "ORG1_AUTH", "data": {}, "owner": "Org1MSP", "type": "AUTH" },
@@ -25,10 +30,14 @@
 		{ "id": "as100r1_b", "owner": "Org1MSP", "action": { "type": "nl.dl4ld.function", "functionName": "docker", "params": {"name":"as100r1", "cmd": "route add -host $cmdParam reject" } }},
 		{ "id": "as200r1_b", "owner": "Org2MSP", "action": { "type": "nl.dl4ld.function", "functionName": "docker", "params": {"name":"as200r1", "cmd": "route add -host $cmdParam reject" } }},
 		{ "id": "ddos_defense", "action": { "type": "nl.dl4ld.function", "functionName": "done", "params": {} }},
-		{ "id": "as20r1_u", "owner": "Org3MSP", "action": { "type": "nl.dl4ld.function", "functionName": "docker", "params": {"name":"as20r1", "cmd": "route del -host $cmdParam reject" } }},
-		{ "id": "as30r1_u", "owner": "Org3MSP", "action": { "type": "nl.dl4ld.function", "functionName": "docker", "params": {"name":"as30r1", "cmd": "route del -host $cmdParam reject" } }},
-		{ "id": "as100r1_u", "owner": "Org1MSP", "action": { "type": "nl.dl4ld.function", "functionName": "docker", "params": {"name":"as100r1", "cmd": "route del -host $cmdParam reject" } }},
-		{ "id": "as200r1_u", "owner": "Org2MSP", "action": { "type": "nl.dl4ld.function", "functionName": "docker", "params": {"name":"as200r1", "cmd": "route del -host $cmdParam reject" } }}
+		{ "id": "validator_o11", "owner": "Org1MSP", "action": { "type": "nl.dl4ld.function", "functionName": "validate", "params": {"name":"as20r1", "cmd": "route add -host $cmdParam reject" } }},
+		{ "id": "validator_o21", "owner": "Org2MSP", "action": { "type": "nl.dl4ld.function", "functionName": "validate", "params": {"name":"as30r1", "cmd": "route add -host $cmdParam reject" } }},
+		{ "id": "validator_o31", "owner": "Org3MSP", "action": { "type": "nl.dl4ld.function", "functionName": "validate", "params": {"name":"as100r1", "cmd": "route add -host $cmdParam reject" } }},
+		{ "id": "validator_o41", "owner": "Org3MSP", "action": { "type": "nl.dl4ld.function", "functionName": "validate", "params": {"name":"as200r1", "cmd": "route add -host $cmdParam reject" } }},
+		{ "id": "validator_o12", "owner": "Org1MSP", "action": { "type": "nl.dl4ld.function", "functionName": "validate", "params": {"name":"as20r1", "cmd": "route add -host $cmdParam reject" } }},
+		{ "id": "validator_o22", "owner": "Org2MSP", "action": { "type": "nl.dl4ld.function", "functionName": "validate", "params": {"name":"as30r1", "cmd": "route add -host $cmdParam reject" } }},
+		{ "id": "validator_o32", "owner": "Org3MSP", "action": { "type": "nl.dl4ld.function", "functionName": "validate", "params": {"name":"as100r1", "cmd": "route add -host $cmdParam reject" } }},
+		{ "id": "validator_o42", "owner": "Org3MSP", "action": { "type": "nl.dl4ld.function", "functionName": "validate", "params": {"name":"as200r1", "cmd": "route add -host $cmdParam reject" } }}
 	],
 	"nets": [
 		{
@@ -53,15 +62,30 @@
 				{ "id": 9, "src": {"type": "place",	"id": "P003"}, "dst": { "type": "transition", "id": "as30r1_b"}},
 				{ "id": 10, "src": {"type": "place",	"id": "P004"}, "dst": { "type": "transition", "id": "as100r1_b"}},
 				{ "id": 11, "src": {"type": "place",	"id": "P005"}, "dst": { "type": "transition", "id": "as200r1_b"}},
-				{ "id": 12, "src": {"type": "transition",	"id": "as20r1_b"}, "dst": { "type": "place", "id": "P006"}},
-				{ "id": 13, "src": {"type": "transition",	"id": "as30r1_b"}, "dst": { "type": "place", "id": "P007"}},
-				{ "id": 14, "src": {"type": "transition",	"id": "as100r1_b"}, "dst": { "type": "place", "id": "P008"}},
-				{ "id": 15, "src": {"type": "transition",	"id": "as200r1_b"}, "dst": { "type": "place", "id": "P009"}},
-				{ "id": 18, "src": {"type": "place",	"id": "P006"}, "dst": { "type": "transition", "id": "ddos_defense"}},
-				{ "id": 19, "src": {"type": "place",	"id": "P007"}, "dst": { "type": "transition", "id": "ddos_defense"}},
-				{ "id": 20, "src": {"type": "place",	"id": "P008"}, "dst": { "type": "transition", "id": "ddos_defense"}},
-				{ "id": 21, "src": {"type": "place",	"id": "P009"}, "dst": { "type": "transition", "id": "ddos_defense"}},
-				{ "id": 22, "src": {"type": "transition",	"id": "ddos_defense"}, "dst": { "type": "place", "id": "P010"}}
+				{ "id": 12, "src": {"type": "transition",	"id": "as20r1_b"}, "dst": { "type": "place", "id": "V011"}},
+				{ "id": 13, "src": {"type": "transition",	"id": "as30r1_b"}, "dst": { "type": "place", "id": "V021"}},
+				{ "id": 14, "src": {"type": "transition",	"id": "as100r1_b"}, "dst": { "type": "place", "id": "V031"}},
+				{ "id": 15, "src": {"type": "transition",	"id": "as200r1_b"}, "dst": { "type": "place", "id": "V041"}},
+				{ "id": 16, "src": {"type": "transition",	"id": "as20r1_b"}, "dst": { "type": "place", "id": "V012"}},
+				{ "id": 17, "src": {"type": "transition",	"id": "as30r1_b"}, "dst": { "type": "place", "id": "V022"}},
+				{ "id": 18, "src": {"type": "transition",	"id": "as100r1_b"}, "dst": { "type": "place", "id": "V032"}},
+				{ "id": 19, "src": {"type": "transition",	"id": "as200r1_b"}, "dst": { "type": "place", "id": "V042"}},
+				{ "id": 20, "src": {"type": "place",	"id": "V011"}, "dst": { "type": "transition", "id": "validator_o11"}},
+				{ "id": 21, "src": {"type": "place",	"id": "V012"}, "dst": { "type": "transition", "id": "validator_o21"}},
+				{ "id": 22, "src": {"type": "place",	"id": "V021"}, "dst": { "type": "transition", "id": "validator_o12"}},
+				{ "id": 23, "src": {"type": "place",	"id": "V022"}, "dst": { "type": "transition", "id": "validator_o22"}},
+				{ "id": 24, "src": {"type": "place",	"id": "V031"}, "dst": { "type": "transition", "id": "validator_o31"}},
+				{ "id": 25, "src": {"type": "place",	"id": "V032"}, "dst": { "type": "transition", "id": "validator_o41"}},
+				{ "id": 26, "src": {"type": "place",	"id": "V041"}, "dst": { "type": "transition", "id": "validator_o32"}},
+				{ "id": 27, "src": {"type": "place",	"id": "V042"}, "dst": { "type": "transition", "id": "validator_o42"}},
+				{ "id": 28, "src": {"type": "transition",	"id": "validator_o11"}, "dst": { "type": "place", "id": "T003"}},
+				{ "id": 29, "src": {"type": "transition",	"id": "validator_o21"}, "dst": { "type": "place", "id": "T003"}},
+        { "id": 30, "src": {"type": "transition",	"id": "validator_o12"}, "dst": { "type": "place", "id": "T004"}},
+				{ "id": 31, "src": {"type": "transition",	"id": "validator_o22"}, "dst": { "type": "place", "id": "T004"}},
+        { "id": 32, "src": {"type": "transition",	"id": "validator_o31"}, "dst": { "type": "place", "id": "T001"}},
+				{ "id": 33, "src": {"type": "transition",	"id": "validator_o41"}, "dst": { "type": "place", "id": "T001"}},
+        { "id": 34, "src": {"type": "transition",	"id": "validator_o32"}, "dst": { "type": "place", "id": "T002"}},
+				{ "id": 35, "src": {"type": "transition",	"id": "validator_o42"}, "dst": { "type": "place", "id": "T002"}}
 			],
 			"statements": [
 				{ "id": "statement01", "description": "If DOS detected then alert Org1MSP, Org2MSP, Org3MSP.", "firings": ["ddos_alert"] },
@@ -71,78 +95,6 @@
 				{ "id": "statement05", "description": "On alert, Org3MSP must block IPs on router AS30R1.", "transitions": ["as30r1_b"] },
 				{ "id": "statement06", "description": "If Org1MSP, Org2MSP, Org3MSP perform action then agreement is complete.", "firings": ["ddos_defense"] }
 			]
-		},
-		{
-			"id": "UNBLOCK",
-			"admin": "Org1MSP",
-			"disabled": true,
-			"config": {
-				"k": 1,
-				"type": "workflow",
-				"startPlace": "IP_LIST",
-				"endPlace": "P010",
-				"resetOnEnd": true
-			},
-			"arcs": [
-				{ "src": {"type": "place",	"id": "IP_LIST"}, "dst": { "type": "transition", "id": "ddos_alert"}},
-				{ "src": {"type": "place",	"id": "AUTH_NETWORK"}, "dst": { "type": "transition", "id": "ddos_alert"}},
-				{ "src": {"type": "transition",	"id": "ddos_alert"}, "dst": { "type": "place", "id": "P002"}},
-				{ "src": {"type": "transition",	"id": "ddos_alert"}, "dst": { "type": "place", "id": "P003"}},
-				{ "src": {"type": "transition",	"id": "ddos_alert"}, "dst": { "type": "place", "id": "P004"}},
-				{ "src": {"type": "transition",	"id": "ddos_alert"}, "dst": { "type": "place", "id": "P005"}},
-				{ "src": {"type": "place",	"id": "P002"}, "dst": { "type": "transition", "id": "as20r1_u"}},
-				{ "src": {"type": "place",	"id": "P003"}, "dst": { "type": "transition", "id": "as30r1_u"}},
-				{ "src": {"type": "place",	"id": "P004"}, "dst": { "type": "transition", "id": "as100r1_u"}},
-				{ "src": {"type": "place",	"id": "P005"}, "dst": { "type": "transition", "id": "as200r1_u"}},
-				{ "src": {"type": "transition",	"id": "as20r1_u"}, "dst": { "type": "place", "id": "P006"}},
-				{ "src": {"type": "transition",	"id": "as30r1_u"}, "dst": { "type": "place", "id": "P007"}},
-				{ "src": {"type": "transition",	"id": "as100r1_u"}, "dst": { "type": "place", "id": "P008"}},
-				{ "src": {"type": "transition",	"id": "as200r1_u"}, "dst": { "type": "place", "id": "P009"}},
-				{ "src": {"type": "place",	"id": "P006"}, "dst": { "type": "transition", "id": "ddos_defense"}},
-				{ "src": {"type": "place",	"id": "P007"}, "dst": { "type": "transition", "id": "ddos_defense"}},
-				{ "src": {"type": "place",	"id": "P008"}, "dst": { "type": "transition", "id": "ddos_defense"}},
-				{ "src": {"type": "place",	"id": "P009"}, "dst": { "type": "transition", "id": "ddos_defense"}},
-				{ "src": {"type": "transition",	"id": "ddos_defense"}, "dst": { "type": "place", "id": "P010"}}
-			]
-		},
-		{
-			"id": "N001",
-			"admin": "Org1MSP",
-			"disabled": "true",
-			"config": {
-				"k": 1
-			},
-			"arcs": [
-				{ "src": {"type": "place",	"id": "P001"}, "dst": { "type": "transition", "id": "ddos_alert"}},
-				{ "src": {"type": "transition",	"id": "ddos_alert"}, "dst": { "type": "place", "id": "P002"}},
-				{ "src": {"type": "place",	"id": "P002"}, "dst": { "type": "transition", "id": "T002"}},
-				{ "src": {"type": "transition",	"id": "T002"}, "dst": { "type": "place", "id": "P001"}}
-			]
-		},
-		{
-			"id": "N001",
-			"admin": "Org1MSP",
-			"disabled": "true",
-			"config": {
-				"k": 1
-			},
-			"arcs": [
-				{ "src": {"type": "place",	"id": "P001"}, "dst": { "type": "transition", "id": "ddos_alert"}}
-			]
-		},
-		{
-			"id": "N003",
-			"admin": "Org1MSP",
-			"disabled": "true",
-			"config": {
-				"k":1
-			},
-			"arcs": [
-				{ "src": { "type": "net",  "id": "N001"},  "dst": { "type": "net",  "id": "N002"}},
-				{ "src": {"type": "transition",	"id": "ddos_alert"}, "dst": { "type": "place", "id": "P002"}},
-				{ "src": {"type": "transition",	"id": "T002"}, "dst": { "type": "place", "id": "P001"}}
-			]
-
 		}
 	],
 	"instructions": [
