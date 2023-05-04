@@ -17,7 +17,11 @@
 		{"id": "T001", "isLocked": false, "type": "DATA"},
 		{"id": "T002", "isLocked": false, "type": "DATA"},
 		{"id": "T003", "isLocked": false, "type": "DATA"},
-		{"id": "T004", "isLocked": false, "type": "DATA"}
+		{"id": "T004", "isLocked": false, "type": "DATA"},
+		{"id": "FT001", "isLocked": false, "type": "DATA"},
+		{"id": "FT002", "isLocked": false, "type": "DATA"},
+		{"id": "FT003", "isLocked": false, "type": "DATA"},
+		{"id": "FT004", "isLocked": false, "type": "DATA"}
 	],
 	"tokens": [
 		{ "id": "ORG1_AUTH", "data": {}, "owner": "Org1MSP", "type": "AUTH" },
@@ -37,7 +41,11 @@
 		{ "id": "validator_o12", "owner": "Org1MSP", "action": { "type": "nl.dl4ld.function", "functionName": "validate", "params": {"name":"as20r1", "cmd": "route add -host $cmdParam reject" } }},
 		{ "id": "validator_o22", "owner": "Org2MSP", "action": { "type": "nl.dl4ld.function", "functionName": "validate", "params": {"name":"as30r1", "cmd": "route add -host $cmdParam reject" } }},
 		{ "id": "validator_o32", "owner": "Org3MSP", "action": { "type": "nl.dl4ld.function", "functionName": "validate", "params": {"name":"as100r1", "cmd": "route add -host $cmdParam reject" } }},
-		{ "id": "validator_o42", "owner": "Org3MSP", "action": { "type": "nl.dl4ld.function", "functionName": "validate", "params": {"name":"as200r1", "cmd": "route add -host $cmdParam reject" } }}
+		{ "id": "validator_o42", "owner": "Org3MSP", "action": { "type": "nl.dl4ld.function", "functionName": "validate", "params": {"name":"as200r1", "cmd": "route add -host $cmdParam reject" } }},
+		{ "id": "gen_token_o1", "owner": "Org3MSP", "action": { "type": "nl.dl4ld.function", "functionName": "genToken", "params": {"org":"Org1MSP", "type": "AUTH" } }},
+		{ "id": "gen_token_o2", "owner": "Org1MSP", "action": { "type": "nl.dl4ld.function", "functionName": "genToken", "params": {"org":"Org2MSP", "type": "AUTH" } }},
+		{ "id": "gen_token_o3", "owner": "Org2MSP", "action": { "type": "nl.dl4ld.function", "functionName": "genToken", "params": {"org":"Org3MSP", "type": "AUTH" } }},
+		{ "id": "gen_token_o4", "owner": "Org1MSP", "action": { "type": "nl.dl4ld.function", "functionName": "genToken", "params": {"org":"Org3MSP", "type": "AUTH" } }}
 	],
 	"nets": [
 		{
@@ -85,7 +93,15 @@
         { "id": 32, "src": {"type": "transition",	"id": "validator_o31"}, "dst": { "type": "place", "id": "T001"}},
 				{ "id": 33, "src": {"type": "transition",	"id": "validator_o41"}, "dst": { "type": "place", "id": "T001"}},
         { "id": 34, "src": {"type": "transition",	"id": "validator_o32"}, "dst": { "type": "place", "id": "T002"}},
-				{ "id": 35, "src": {"type": "transition",	"id": "validator_o42"}, "dst": { "type": "place", "id": "T002"}}
+				{ "id": 35, "src": {"type": "transition",	"id": "validator_o42"}, "dst": { "type": "place", "id": "T002"}},
+				{ "id": 36, "src": {"type": "place",	"id": "T003"}, "dst": { "type": "transition", "id": "gen_token_o3"}},
+				{ "id": 37, "src": {"type": "place",	"id": "T004"}, "dst": { "type": "transition", "id": "gen_token_o4"}},
+				{ "id": 38, "src": {"type": "place",	"id": "T001"}, "dst": { "type": "transition", "id": "gen_token_o1"}},
+				{ "id": 39, "src": {"type": "place",	"id": "T002"}, "dst": { "type": "transition", "id": "gen_token_o2"}},
+        { "id": 40, "src": {"type": "transition",	"id": "gen_token_o1"}, "dst": { "type": "place", "id": "FT001"}},
+        { "id": 41, "src": {"type": "transition",	"id": "gen_token_o2"}, "dst": { "type": "place", "id": "FT002"}},
+        { "id": 43, "src": {"type": "transition",	"id": "gen_token_o3"}, "dst": { "type": "place", "id": "FT003"}},
+        { "id": 44, "src": {"type": "transition",	"id": "gen_token_o4"}, "dst": { "type": "place", "id": "FT004"}}
 			],
 			"statements": [
 				{ "id": "statement01", "description": "If DOS detected then alert Org1MSP, Org2MSP, Org3MSP.", "firings": ["ddos_alert"] },
