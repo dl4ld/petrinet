@@ -42,10 +42,10 @@
 		{ "id": "validator_o22", "owner": "Org2MSP", "action": { "type": "nl.dl4ld.function", "functionName": "validate", "params": {"name":"as30r1", "cmd": "route add -host $cmdParam reject" } }},
 		{ "id": "validator_o32", "owner": "Org3MSP", "action": { "type": "nl.dl4ld.function", "functionName": "validate", "params": {"name":"as100r1", "cmd": "route add -host $cmdParam reject" } }},
 		{ "id": "validator_o42", "owner": "Org3MSP", "action": { "type": "nl.dl4ld.function", "functionName": "validate", "params": {"name":"as200r1", "cmd": "route add -host $cmdParam reject" } }},
-		{ "id": "gen_token_o1", "owner": "Org3MSP", "action": { "type": "nl.dl4ld.contractFunction", "functionName": "genToken", "params": {"org":"Org1MSP", "type": "AUTH" } }},
-		{ "id": "gen_token_o2", "owner": "Org1MSP", "action": { "type": "nl.dl4ld.contractFunction", "functionName": "genToken", "params": {"org":"Org2MSP", "type": "AUTH" } }},
-		{ "id": "gen_token_o3", "owner": "Org2MSP", "action": { "type": "nl.dl4ld.contractFunction", "functionName": "genToken", "params": {"org":"Org3MSP", "type": "AUTH" } }},
-		{ "id": "gen_token_o4", "owner": "Org1MSP", "action": { "type": "nl.dl4ld.contractFunction", "functionName": "genToken", "params": {"org":"Org3MSP", "type": "AUTH" } }}
+		{ "id": "gen_token_o1", "owner": "Org3MSP", "action": { "type": "nl.dl4ld.function", "functionName": "genToken", "params": {"org":"Org1MSP", "type": "AUTH" } }},
+		{ "id": "gen_token_o2", "owner": "Org1MSP", "action": { "type": "nl.dl4ld.function", "functionName": "genToken", "params": {"org":"Org2MSP", "type": "AUTH" } }},
+		{ "id": "gen_token_o3", "owner": "Org2MSP", "action": { "type": "nl.dl4ld.function", "functionName": "genToken", "params": {"org":"Org3MSP", "type": "AUTH" } }},
+		{ "id": "gen_token_o4", "owner": "Org1MSP", "action": { "type": "nl.dl4ld.function", "functionName": "genToken", "params": {"org":"Org3MSP", "type": "AUTH" } }}
 	],
 	"nets": [
 		{
