@@ -525,17 +525,18 @@ async function main() {
 					let transaction;
 					let resultBuffer;
 					let asset;
+          let owner = t.owner || orgMSP
 					if(t.action.type == "nl.dl4ld.function") {
 						transaction = contract1Org.createTransaction('CreateFunctionTransition');
-						resultBuffer = await transaction.submit(assetKey, t.action.functionName, JSON.stringify(t.action.params), t.owner);
+						resultBuffer = await transaction.submit(assetKey, t.action.functionName, JSON.stringify(t.action.params), owner);
 					}
 					if(t.action.type == "nl.dl4ld.webhook"){
 						transaction = contract1Org.createTransaction('CreateWebhookTransition');
-						resultBuffer = await transaction.submit(assetKey, t.action.webhookURI, "", t.owner);
+						resultBuffer = await transaction.submit(assetKey, t.action.webhookURI, "", owner);
 					}
 					if(t.action.type == "nl.dl4ld.actorAction"){
 						transaction = contract1Org.createTransaction('CreateTransition');
-						resultBuffer = await transaction.submit(assetKey, t.action.functionURI, t.owner);
+						resultBuffer = await transaction.submit(assetKey, t.action.functionURI, owner);
 					}
 
 					asset = resultBuffer.toString('utf8');

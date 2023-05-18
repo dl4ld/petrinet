@@ -32,7 +32,7 @@
 		{ "id": "IP_TO_BLOCK", "data": "200.2.0.2", "owner": "Org1MSP", "type": "DATA" }
 	],
 	"transitions": [
-		{ "id": "ddos_alert", "action": { "type": "nl.dl4ld.function", "functionName": "alert", "params":{} }},
+		{ "id": "ddos_alert", "owner": "Org1MSP", "action": { "type": "nl.dl4ld.function", "functionName": "alert", "params":{} }},
 		{ "id": "as20r1_b", "owner": "Org3MSP", "action": { "type": "nl.dl4ld.function", "functionName": "docker", "params": {"name":"as20r1", "cmd": "route add -host $cmdParam reject" } }},
 		{ "id": "as30r1_b", "owner": "Org3MSP", "action": { "type": "nl.dl4ld.function", "functionName": "docker", "params": {"name":"as30r1", "cmd": "route add -host $cmdParam reject" } }},
 		{ "id": "as100r1_b", "owner": "Org1MSP", "action": { "type": "nl.dl4ld.function", "functionName": "docker", "params": {"name":"as100r1", "cmd": "route add -host $cmdParam reject" } }},
