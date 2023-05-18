@@ -72,14 +72,16 @@ const f = {
   genToken(ctx, args, inputTokens) {
     return new Promise((resolve, reject) => {
       console.log("genToken: ")
-      console.log(inputTokens)
-      console.log(args)
-      resolve()
+      console.log("inputTokens: ", inputTokens)
+      console.log("args: ", args)
+      resolve({"genToken":""})
     })
   },
   validate: function(ctx, args, inputTokens) {
     return new Promise((resolve, reject) => {
 			console.log("called validate");
+      console.log("inputTokens: ", inputTokens)
+      console.log("args: ", args)
       // TODO
       // validation routine
 			resolve({"validate":""});
