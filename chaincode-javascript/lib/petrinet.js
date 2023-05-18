@@ -811,7 +811,7 @@ class Petrinet extends Contract {
 	    //return transition;
     }
 
-    async CreateTransition(ctx, transitionId, functionURI) {
+    async CreateTransition(ctx, transitionId, functionURI, owner) {
 	    const key = ctx.stub.createCompositeKey(this.name, ['transition', transitionId])
 	    const t = await getAssetJSON(ctx, key)
 	    if(t) {
@@ -820,7 +820,7 @@ class Petrinet extends Contract {
 	    const transition = {
 		    id: transitionId,
 		    issuer: ctx.clientIdentity.getID(),
-		    owner: ctx.clientIdentity.getMSPID(),
+		    owner: owner || ctx.clientIdentity.getMSPID(),
 		    action: {
 			type: "nl.dl4ld.actorAction",
 			uri: functionURI
@@ -831,7 +831,7 @@ class Petrinet extends Contract {
 	    return transition
     }
     
-    async CreateWebhookTransition(ctx, transitionId, webhookURI, headers) {
+    async CreateWebhookTransition(ctx, transitionId, webhookURI, headers, owner) {
 	    const key = ctx.stub.createCompositeKey(this.name, ['transition', transitionId])
 	    const t = await getAssetJSON(ctx, key)
 	    if(t) {
@@ -840,7 +840,7 @@ class Petrinet extends Contract {
 	    const transition = {
 		    id: transitionId,
 		    issuer: ctx.clientIdentity.getID(),
-		    owner: ctx.clientIdentity.getMSPID(),
+		    owner: owner || ctx.clientIdentity.getMSPID(),
 		    action: {
 			type: "nl.dl4ld.webhook",
 			uri: webhookURI,
@@ -852,7 +852,7 @@ class Petrinet extends Contract {
 	    return transition
     }
     
-    async CreateFunctionTransition(ctx, transitionId, functionName, params) {
+    async CreateFunctionTransition(ctx, transitionId, functionName, params, owner) {
 	    const key = ctx.stub.createCompositeKey(this.name, ['transition', transitionId])
 	    const t = await getAssetJSON(ctx, key)
 	    if(t) {
@@ -861,7 +861,7 @@ class Petrinet extends Contract {
 	    const transition = {
 		    id: transitionId,
 		    issuer: ctx.clientIdentity.getID(),
-		    owner: ctx.clientIdentity.getMSPID(),
+		    owner: owner || ctx.clientIdentity.getMSPID(),
 		    action: {
 			type: "nl.dl4ld.function",
 			functionName: functionName,
