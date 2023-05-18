@@ -56,6 +56,7 @@ function isEmpty(obj) {
     return true;
 }
 
+
 async function getAllResults(iterator, isHistory) {
         let allResults = [];
         let res = { done: false, value: null };
@@ -116,6 +117,15 @@ class Petrinet extends Contract {
 
     constructor() {
 	   super('nl.dl4ld.petrinet.');
+    }
+
+    async genToken(ctx, tokenId, orgId, type, data) {
+	    const myOrgId = ctx.clientIdentity.getMSPID();
+      if (myOrgId == orgId) {
+		    throw new Error(`Can not generate token for yourself!`);
+        return;
+      } 
+      return CreateToken(ctx, tokenId, type, data, orgId) 
     }
  
     async PutToken(ctx, tokenId, netId, placeId) {
