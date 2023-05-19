@@ -177,11 +177,11 @@ class Petrinet extends Contract {
       throw new Error(`Place exceeds number of tokens: ${net.k}`);
     }
 
-    if (token.reuse) {
-      console.log(`token reuse true: ${token}`);
+    if (token.reuse === true) {
+      console.log(`token reuse true: ${JSON.stringify(token)}`);
       token.status = 'READY';
     } else {
-      console.log(`token reuse false: ${token}`);
+      console.log(`token reuse false: ${JSON.stringify(token)}`);
       token.status = 'USED';
     }
     // Move token to place.
