@@ -75,7 +75,10 @@ const f = {
       console.log("genToken: ")
       console.log("inputTokens: ", inputTokens)
       console.log("args: ", args)
-      orgForNewToken = inputTokens[0].data.validateForOrg
+      data = JSON.parse(inputTokens[0].data)
+      orgForNewToken = data.validateForOrg
+      console.log("generating token for: ", orgForNewToken)
+      console.log("with id: ", tokenId)
       const transaction = ctx.contract.createTransaction("GenerateToken")
       transaction.submit(tokenId, orgForNewToken, "AUTH", {}).then(response => {
         resolve({
