@@ -177,9 +177,15 @@ class Petrinet extends Contract {
       throw new Error(`Place exceeds number of tokens: ${net.k}`);
     }
 
+    if (token.reuse) {
+      console.log(`token reuse true: ${token}`);
+      token.status = 'READY';
+    } else {
+      console.log(`token reuse false: ${token}`);
+      token.status = 'USED';
+    }
     // Move token to place.
     place.tokens.push(token);
-    token.status = (token.reuse === true) ? 'READY': 'USED';
 
     await ctx.stub.putState(placeKey, Buffer.from(JSON.stringify(place)));
     // Update token asset
