@@ -77,12 +77,13 @@ const f = {
       console.log("args: ", args)
       orgForNewToken = inputTokens[0].data.validateForOrg
       const transaction = ctx.contract.createTransaction("GenerateToken")
-      transaction.submit(tokenId, orgForNewToken, "AUTH", {}).then(response = {
-        resolve({"genToken": true,
-                "tokenId": tokenId,
-                "org": orgForNewToken
+      transaction.submit(tokenId, orgForNewToken, "AUTH", {}).then(response => {
+        resolve({
+          "genToken": true,
+          "tokenId": tokenId,
+          "org": orgForNewToken
         })
-      }
+      })
     })
   },
   validate: function(ctx, args, inputTokens) {
