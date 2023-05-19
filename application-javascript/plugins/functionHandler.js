@@ -86,9 +86,7 @@ const f = {
       // TODO
       // validation routine
 			resolve({
-        "validate": True,
-        "inputArgs": args,
-        "validateForOrg": inputTokens[0].owner
+        "validate": True
       });
     })
   },
