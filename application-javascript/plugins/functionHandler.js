@@ -69,13 +69,20 @@ const f = {
 			})
 		})
 	},
-  genToken(ctx, args, inputTokens) {
+  genToken: function(ctx, args, inputTokens) {
+	  const tokenId = 'TKI' + (Math.floor(Math.random() * 99) + 1);
     return new Promise((resolve, reject) => {
       console.log("genToken: ")
       console.log("inputTokens: ", inputTokens)
       console.log("args: ", args)
-      
-      resolve({"genToken": args.validateForOrg})
+      orgForNewToken = inputTokens[0].data.validateForOrg
+      const transaction = ctx.contract.createTransaction("GenerateToken")
+      transaction.submit(tokenId, orgForNewToken, "AUTH", {}).then(response = {
+        resolve({"genToken": true,
+                "tokenId" tokenId,
+                "org": orgForNewToken
+        })
+      }
     })
   },
   validate: function(ctx, args, inputTokens) {

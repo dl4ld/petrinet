@@ -118,7 +118,7 @@ class Petrinet extends Contract {
     super('nl.dl4ld.petrinet.');
   }
 
-  async genToken(ctx, tokenId, orgId, type, data) {
+  async GenerateToken(ctx, tokenId, orgId, type, data) {
     const myOrgId = ctx.clientIdentity.getMSPID();
     if (myOrgId === orgId) {
       throw new Error('Can not generate token for yourself!');
