@@ -179,7 +179,7 @@ class Petrinet extends Contract {
 
     // Move token to place.
     place.tokens.push(token);
-    token.status = 'USED';
+    token.status = token.disposable ? 'USED': 'READY';
 
     await ctx.stub.putState(placeKey, Buffer.from(JSON.stringify(place)));
     // Update token asset
@@ -370,6 +370,7 @@ class Petrinet extends Contract {
             owner: ctx.clientIdentity.getMSPID(),
             type: place.type,
             data: transitionOutputData,
+            disposable: true,
             status: 'USED',
           };
 

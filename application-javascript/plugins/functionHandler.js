@@ -70,13 +70,13 @@ const f = {
 		})
 	},
   genToken: function(ctx, args, inputTokens) {
-	  const tokenId = 'TKI' + (Math.floor(Math.random() * 99) + 1);
     return new Promise((resolve, reject) => {
       console.log("genToken: ")
       console.log("inputTokens: ", inputTokens)
       console.log("args: ", args)
       data = JSON.parse(inputTokens[0].data)
       orgForNewToken = data.validateForOrg
+	    const tokenId = 'AUTH_' + orgForNewToken + "_" + (Math.floor(Math.random() * 99) + 1);
       console.log("generating token for: ", orgForNewToken)
       console.log("with id: ", tokenId)
       const transaction = ctx.contract.createTransaction("GenerateToken")

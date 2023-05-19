@@ -28,8 +28,8 @@
 		{"id": "FT004", "isLocked": false, "type": "DATA"}
 	],
 	"tokens": [
-		{ "id": "ORG1_AUTH", "data": {}, "owner": "Org1MSP", "type": "AUTH" },
-		{ "id": "IP_TO_BLOCK", "data": "200.2.0.2", "owner": "Org1MSP", "type": "DATA" }
+		{ "id": "AUTH_Org1MSP_001", "data": {}, "owner": "Org1MSP", "type": "AUTH" },
+		{ "id": "IP_TO_BLOCK", "data": "200.2.0.2", "owner": "Org1MSP", "type": "DATA", "disposable": false}
 	],
 	"transitions": [
 		{ "id": "ddos_alert", "owner": "Org1MSP", "action": { "type": "nl.dl4ld.function", "functionName": "alert", "params":{} }},

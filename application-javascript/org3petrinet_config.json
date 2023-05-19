@@ -2,8 +2,7 @@
 	"places": [
 	],
 	"tokens": [
-		{ "id": "ORG3_AUTH", "data": {}, "owner": "Org3MSP", "type": "AUTH" },
-		{ "id": "IP_TO_BLOCK_3", "data": "200.2.0.2", "owner": "Org3MSP", "type": "DATA" }
+		{ "id": "IP_TO_BLOCK_3", "data": "200.2.0.2", "owner": "Org3MSP", "type": "DATA", "disposable": false}
 	],
 	"transitions": [
 		{ "id": "as20r1_b", "owner": "Org3MSP", "action": { "type": "nl.dl4ld.function", "functionName": "docker", "params": {"name":"as20r1", "cmd": "route add -host $cmdParam reject" } }},
