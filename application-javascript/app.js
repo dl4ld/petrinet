@@ -509,7 +509,7 @@ async function main() {
 					console.log(`${GREEN}--> Submit Transaction: CreateToken, ${assetKey}`);
 					const transaction = contract1Org.createTransaction('CreateToken');
 					//const resultBuffer = await transaction.submit(assetKey, t.type, JSON.stringify(t.data), t.owner);
-					const resultBuffer = await transaction.submit(assetKey, t.type, t.data, t.owner, t.reuse);
+					const resultBuffer = await transaction.submit(assetKey, t.type, t.data, t.owner, t.reuse || false);
 					const asset = resultBuffer.toString('utf8');
 					console.log(`${GREEN}<-- Submit CreateToken Result: committed, asset ${assetKey}${asset}${RESET}`);
 				} catch (createError) {
