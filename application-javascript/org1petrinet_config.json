@@ -29,7 +29,7 @@
 	],
 	"tokens": [
 		{ "id": "AUTH_Org1MSP_001", "data": {}, "owner": "Org1MSP", "type": "AUTH" },
-		{ "id": "IP_TO_BLOCK", "data": "200.2.0.2", "owner": "Org1MSP", "type": "DATA", "disposable": false}
+		{ "id": "IP_TO_BLOCK", "data": "200.2.0.2", "owner": "Org1MSP", "type": "DATA", "reuse": true}
 	],
 	"transitions": [
 		{ "id": "ddos_alert", "owner": "Org1MSP", "action": { "type": "nl.dl4ld.function", "functionName": "alert", "params":{} }},
