@@ -79,7 +79,7 @@ const f = {
       const transaction = ctx.contract.createTransaction("GenerateToken")
       transaction.submit(tokenId, orgForNewToken, "AUTH", {}).then(response = {
         resolve({"genToken": true,
-                "tokenId" tokenId,
+                "tokenId": tokenId,
                 "org": orgForNewToken
         })
       }
