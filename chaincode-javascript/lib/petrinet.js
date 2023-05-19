@@ -123,7 +123,7 @@ class Petrinet extends Contract {
     if (myOrgId === orgId) {
       throw new Error('Can not generate token for yourself!');
     }
-    return this.CreateToken(ctx, tokenId, type, data, orgId);
+    return this.CreateToken(ctx, tokenId, type, data, orgId, false);
   }
 
   async PutToken(ctx, tokenId, netId, placeId) {
@@ -760,7 +760,7 @@ class Petrinet extends Contract {
     return place.toString();
   }
 
-  async CreateToken(ctx, tokenId, type, data, owner) {
+  async CreateToken(ctx, tokenId, type, data, owner, reuse) {
     const key = ctx.stub.createCompositeKey(this.name, ['token', tokenId]);
     if (!type) {
       throw new Error('Token must have a type.');
@@ -771,6 +771,7 @@ class Petrinet extends Contract {
       owner: owner || ctx.clientIdentity.getMSPID(),
       type: type,
       data: data,
+      reuse: reuse,
       status: 'READY',
     };
     await ctx.stub.putState(key, Buffer.from(JSON.stringify(token)));
