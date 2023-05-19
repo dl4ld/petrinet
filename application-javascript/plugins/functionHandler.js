@@ -74,7 +74,8 @@ const f = {
       console.log("genToken: ")
       console.log("inputTokens: ", inputTokens)
       console.log("args: ", args)
-      resolve({"genToken":""})
+      
+      resolve({"genToken": args.validateForOrg})
     })
   },
   validate: function(ctx, args, inputTokens) {
@@ -84,7 +85,11 @@ const f = {
       console.log("args: ", args)
       // TODO
       // validation routine
-			resolve({"validate":""});
+			resolve({
+        "validate": True,
+        "inputArgs": args,
+        "validateForOrg": inputTokens[0].owner
+      });
     })
   },
 	done: function(ctx, args, inputTokens){
