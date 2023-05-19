@@ -179,7 +179,7 @@ class Petrinet extends Contract {
 
     // Move token to place.
     place.tokens.push(token);
-    token.status = token.reuse ? 'USED': 'READY';
+    token.status = (token.reuse === true) ? 'READY': 'USED';
 
     await ctx.stub.putState(placeKey, Buffer.from(JSON.stringify(place)));
     // Update token asset
