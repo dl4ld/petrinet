@@ -69,6 +69,40 @@ const f = {
 			})
 		})
 	},
+  genToken: function(ctx, args, inputTokens) {
+    return new Promise((resolve, reject) => {
+      console.log("genToken: ")
+      console.log("inputTokens: ", inputTokens)
+      console.log("args: ", args)
+      data = JSON.parse(inputTokens[0].data)
+      orgForNewToken = data.validateForOrg
+	    const tokenId = 'AUTH_' + orgForNewToken + "_" + (Math.floor(Math.random() * 99) + 1);
+      console.log("generating token for: ", orgForNewToken)
+      console.log("with id: ", tokenId)
+      const transaction = ctx.contract.createTransaction("GenerateToken")
+      transaction.submit(tokenId, orgForNewToken, "AUTH", {}).then(response => {
+        resolve({
+          "genToken": true,
+          "tokenId": tokenId,
+          "org": orgForNewToken
+        })
+      })
+    })
+  },
+  validate: function(ctx, args, inputTokens) {
+    return new Promise((resolve, reject) => {
+			console.log("called validate");
+      console.log("inputTokens: ", inputTokens)
+      console.log("args: ", args)
+      // TODO
+      // validation routine
+			resolve({
+        "validate": true,
+        "inputArgs": args,
+        "validateForOrg": inputTokens[0].owner
+      });
+    })
+  },
 	done: function(ctx, args, inputTokens){
 		return new Promise((resolve, reject) => {
 			console.log("called done!");

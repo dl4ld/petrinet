@@ -509,7 +509,7 @@ async function main() {
 					console.log(`${GREEN}--> Submit Transaction: CreateToken, ${assetKey}`);
 					const transaction = contract1Org.createTransaction('CreateToken');
 					//const resultBuffer = await transaction.submit(assetKey, t.type, JSON.stringify(t.data), t.owner);
-					const resultBuffer = await transaction.submit(assetKey, t.type, t.data, t.owner);
+					const resultBuffer = await transaction.submit(assetKey, t.type, t.data, t.owner, t.reuse || false);
 					const asset = resultBuffer.toString('utf8');
 					console.log(`${GREEN}<-- Submit CreateToken Result: committed, asset ${assetKey}${asset}${RESET}`);
 				} catch (createError) {
@@ -525,17 +525,18 @@ async function main() {
 					let transaction;
 					let resultBuffer;
 					let asset;
+          let owner = t.owner || orgMSP
 					if(t.action.type == "nl.dl4ld.function") {
 						transaction = contract1Org.createTransaction('CreateFunctionTransition');
-						resultBuffer = await transaction.submit(assetKey, t.action.functionName, JSON.stringify(t.action.params));
+						resultBuffer = await transaction.submit(assetKey, t.action.functionName, JSON.stringify(t.action.params), owner);
 					}
 					if(t.action.type == "nl.dl4ld.webhook"){
 						transaction = contract1Org.createTransaction('CreateWebhookTransition');
-						resultBuffer = await transaction.submit(assetKey, t.action.webhookURI, "");
+						resultBuffer = await transaction.submit(assetKey, t.action.webhookURI, "", owner);
 					}
 					if(t.action.type == "nl.dl4ld.actorAction"){
 						transaction = contract1Org.createTransaction('CreateTransition');
-						resultBuffer = await transaction.submit(assetKey, t.action.functionURI);
+						resultBuffer = await transaction.submit(assetKey, t.action.functionURI, owner);
 					}
 
 					asset = resultBuffer.toString('utf8');
