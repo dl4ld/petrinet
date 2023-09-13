@@ -50,12 +50,12 @@ http://localhost:9191
 
 If all works out, each url should show a web interface. click on NETS in the left side panel and click on the BLOCK network. This will show the DDoS Petri net use-case like so:
 
-[![Web interface](ddos_net.png)]
+![Web interface](ddos_net.png)
 
 Install Kathara binary. Follow instructions https://www.kathara.org/
 
 Install Kathara lab. We want to simulate a simple network like the following:
-[![Emulated Network](kathara_1.png)]
+![Emulated Network](kathara_1.png)
 
 ```
 git clone https://github.com/dl4ld/network-lab.git
